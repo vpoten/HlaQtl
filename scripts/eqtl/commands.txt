@@ -1,0 +1,11 @@
+#ordenar un fichero excluyendo la cabecera de la ordenacion pero añadiendola al resultado
+(head -n 1 group_besteqtls_maf.txt && awk 'NR>1' group_besteqtls_maf.txt | sort -k 2,2 -t $'\t') > join/test1.txt
+
+#unir los dos ficheros por el campo comun ordenado
+join --header -1 2 -2 1 -t $'\t' join/test1.txt join/snps_info_05.log.var_reg_added > join/group_besteqtls_maf.var_reg_added
+
+#ordenar un fichero excluyendo la cabecera de la ordenacion pero añadiendola al resultado
+(head -n 1 eqtl_cis_notbest.txt && awk 'NR>1' eqtl_cis_notbest.txt | sort -k 1,1 -t $'\t') > join/notbest.sort.txt
+#unir los dos ficheros por el campo comun ordenado
+join --header -1 1 -2 1 -t $'\t' join/notbest.sort.txt join/snps_info_05.log.var_reg_added > join/eqtl_cis_notbest.var_reg_added
+

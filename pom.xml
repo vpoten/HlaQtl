@@ -1,0 +1,190 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.msgenetics</groupId>
+  <artifactId>HlaQtl</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>HlaQtl</name>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+  
+  <repositories>
+    <repository>
+        <id>biojava-maven-repo</id>
+        <name>BioJava repository</name>
+        <url>http://www.biojava.org/download/maven/</url>			
+    </repository>
+  </repositories>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.8.2</version>
+      <scope>test</scope>
+    </dependency>
+    
+    <dependency>
+        <groupId>org.awsjoblauncher</groupId>
+        <artifactId>AwsJobLauncher</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </dependency>
+    
+    <dependency>
+        <groupId>org.ngsutils</groupId>
+        <artifactId>NGSUtils</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </dependency>
+    
+    <dependency>
+	<groupId>net.sourceforge.htmlcleaner</groupId>
+	<artifactId>htmlcleaner</artifactId>
+	<version>2.10</version>
+    </dependency>
+    
+    <dependency>
+	<groupId>net.sf.opencsv</groupId>
+	<artifactId>opencsv</artifactId>
+	<version>2.3</version>
+    </dependency>
+    
+    <dependency>
+        <groupId>org.biojava</groupId>
+        <artifactId>biojava-core</artifactId>
+        <version>4.0.0</version>
+    </dependency>
+    
+    <dependency>
+        <groupId>org.biojava</groupId>
+        <artifactId>biojava-alignment</artifactId>
+        <version>4.0.0</version>
+    </dependency>
+    
+    <dependency>
+	<groupId>org.jfree</groupId>
+	<artifactId>jfreechart</artifactId>
+	<version>1.0.14</version>
+    </dependency>
+    
+    <dependency> 
+        <groupId>org.codehaus.groovy</groupId> 
+        <artifactId>groovy-all</artifactId> 
+        <version>2.1.8</version> 
+    </dependency>
+    
+    <dependency>
+        <groupId>nz.ac.waikato.cms.weka</groupId>
+        <artifactId>weka-stable</artifactId>
+        <version>3.6.9</version>
+    </dependency>
+    
+    <!-- added to mvn local repository:
+        mvn install:install-file -Dfile=/path/to/jFuzzyLogic.jar -DgroupId=net.sourceforge 
+        -DartifactId=jFuzzyLogic -Dversion=3.0 -Dpackaging=jar 
+    -->
+    <dependency>
+        <groupId>net.sourceforge</groupId>
+        <artifactId>jFuzzyLogic</artifactId>
+        <version>3.0</version>
+    </dependency>
+    
+    <dependency>
+        <groupId>tech.tablesaw</groupId>
+        <artifactId>tablesaw-core</artifactId>
+        <version>0.32.3</version>
+    </dependency>
+    
+  </dependencies>
+  
+  <build>
+    <sourceDirectory>src/main/groovy</sourceDirectory>
+    <testSourceDirectory>src/test/groovy</testSourceDirectory>
+    
+    <plugins>
+        <!-- maven compiler plugin -->
+        <plugin>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <!-- 2.8.0-01 and later require maven-compiler-plugin 3.1 or higher -->
+            <version>3.1</version>
+            <configuration>
+              <compilerId>groovy-eclipse-compiler</compilerId>
+              <!-- set verbose to be true if you want lots of uninteresting messages -->
+              <!-- <verbose>true</verbose> -->
+            </configuration>
+            <dependencies>
+              <dependency>
+                <groupId>org.codehaus.groovy</groupId>
+                <artifactId>groovy-eclipse-compiler</artifactId>
+                <version>2.8.0-01</version>
+              </dependency>
+              <!-- for 2.8.0-01 and later you must have an explicit dependency on groovy-eclipse-batch -->
+              <dependency>
+                <groupId>org.codehaus.groovy</groupId>
+                <artifactId>groovy-eclipse-batch</artifactId>
+                <version>2.1.8-01</version>
+                <!-- or choose a different compiler version -->
+                <!-- <version>1.8.6-01</version> -->
+                <!-- <version>1.7.10-06</version> -->
+              </dependency>
+            </dependencies>
+        </plugin>
+        
+        <!-- Creates application JAR modifying MANIFEST file -->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>  
+            <artifactId>maven-jar-plugin</artifactId>
+            <version>2.3.1</version>
+            <configuration>  
+                 <archive>  
+                     <manifest>  
+                         <!-- app Main class -->  
+                         <mainClass>org.msgenetics.hlaqtl.Main</mainClass> 
+                         <!-- add classpath to MANIFEST -->  
+                         <addClasspath>true</addClasspath>
+                         <!--  add lib prefix to all jars in classpath -->  
+                         <classpathPrefix>lib</classpathPrefix>  
+                     </manifest>
+                 </archive>  
+            </configuration>   
+        </plugin>
+           
+        <!-- assembly with dependencies -->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>  
+            <artifactId>maven-assembly-plugin</artifactId>
+            <version>2.2.1</version>
+            <configuration>  
+                <descriptors>  
+                    <descriptor>maven_assembly_conf.xml</descriptor>  
+                </descriptors>  
+            </configuration>  
+            <!-- bind to the packaging phase -->
+            <executions>  
+                <execution>  
+                    <phase>package</phase>  
+                    <goals>  
+                        <goal>single</goal>  
+                    </goals>  
+                </execution>  
+            </executions>
+        </plugin>
+        
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.16</version>
+            <configuration>
+                <argLine>-Xmx10g</argLine>
+            </configuration>
+        </plugin>
+        
+    </plugins>
+  </build>
+  
+</project>

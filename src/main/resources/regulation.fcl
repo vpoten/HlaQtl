@@ -1,0 +1,222 @@
+FUNCTION_BLOCK regulation // Block definition
+
+// Define input variables
+VAR_INPUT				
+	DNase : REAL;
+	H3K4Me1 : REAL;
+	H3K27Ac : REAL;
+	H3K4Me3 : REAL;
+	DNase_other : REAL;
+	H3K4Me1_other : REAL;
+	H3K27Ac_other : REAL;
+	H3K4Me3_other : REAL;
+	transFac : REAL;
+	motif : REAL;
+END_VAR
+
+// Define output variable
+VAR_OUTPUT		
+	score : REAL;
+END_VAR
+
+// Fuzzify input variable 'DNase' and histones (in assay cell line)
+FUZZIFY DNase
+	TERM no := 0 ; 
+	TERM yes := 1 ;
+END_FUZZIFY
+
+FUZZIFY H3K4Me1
+	TERM no := 0 ; 
+	TERM yes := 1 ;
+END_FUZZIFY
+
+FUZZIFY H3K27Ac
+	TERM no := 0 ; 
+	TERM yes := 1 ;
+END_FUZZIFY
+
+FUZZIFY H3K4Me3	
+	TERM no := 0 ; 
+	TERM yes := 1 ;
+END_FUZZIFY
+
+// Fuzzify input variable 'DNase' and histones (in other cell lines)
+FUZZIFY DNase_other
+	TERM None := (0,1) (0.05,0);
+	TERM Few := (0,0) (0.05,1) (0.15,1) (0.3,0);
+	TERM Many := (0.15,0) (0.4,1) (1,1);
+END_FUZZIFY
+
+FUZZIFY H3K4Me1_other
+	TERM None := (0,1) (0.05,0);
+	TERM Few := (0,0) (0.05,1) (0.15,1) (0.3,0);
+	TERM Many := (0.15,0) (0.4,1) (1,1);
+END_FUZZIFY
+
+FUZZIFY H3K27Ac_other
+	TERM None := (0,1) (0.05,0);
+	TERM Few := (0,0) (0.05,1) (0.15,1) (0.3,0);
+	TERM Many := (0.15,0) (0.4,1) (1,1);
+END_FUZZIFY
+
+FUZZIFY H3K4Me3_other
+	TERM None := (0,1) (0.05,0);
+	TERM Few := (0,0) (0.05,1) (0.15,1) (0.3,0);
+	TERM Many := (0.15,0) (0.4,1) (1,1);
+END_FUZZIFY
+
+// TFB sites
+FUZZIFY transFac			
+	TERM None := (0,1) (0.05,0);
+	TERM Few := (0,0) (0.05,1) (0.15,1) (0.3,0);
+	TERM Many := (0.15,0) (0.4,1) (1,1);
+END_FUZZIFY
+
+// TFB Site motif
+FUZZIFY motif
+	TERM Small := (0,1) (0.15,1) (0.4,0);
+	TERM Medium := (0.25,0) (0.45,1) (0.55,1) (0.75,0);
+	TERM High := (0.6,0) (0.8,1) (1,1);
+END_FUZZIFY
+
+
+// Defuzzify output variable 'score'
+DEFUZZIFY score			
+	TERM Small := (0,1) (0.15,1) (0.35,0);
+	TERM RSmall := (0.15,0) (0.3,1) (0.45,0);
+	TERM Medium := (0.3,0) (0.5,1) (0.7,0);
+	TERM RHigh := (0.55,0) (0.7,1) (0.85,0);
+	TERM High := (0.65,0) (0.85,1) (1,1);
+	METHOD : COG;	// Use 'Center Of Gravity' defuzzification method
+	DEFAULT := 0;	// Default value is 0 (if no rule activates defuzzifier)
+END_DEFUZZIFY
+
+// Inference rules
+RULEBLOCK No1
+	AND : MIN;	// Use 'min' for 'and'
+	ACT : MIN;	// Use 'min' activation method
+	ACCU : MAX;	// Use 'max' accumulation method
+
+	RULE 1 : IF transFac IS Few THEN score IS Medium;
+	RULE 2 : IF transFac IS Many THEN score IS RHigh;
+
+	RULE 3 : IF motif IS Small THEN score IS Medium;
+	RULE 4 : IF motif IS Medium THEN score IS RHigh;
+	RULE 5 : IF motif IS High THEN score IS High;
+
+	RULE 6 : IF DNase IS yes AND DNase_other IS Few THEN score IS Medium;
+	RULE 7 : IF DNase IS yes AND DNase_other IS Many THEN score IS RHigh;
+	RULE 8 : IF DNase IS no AND DNase_other IS Few THEN score IS RSmall;
+	RULE 9 : IF DNase IS no AND DNase_other IS Many THEN score IS Medium;
+
+	RULE 10 : IF H3K4Me1 IS yes AND H3K4Me1_other IS Few THEN score IS Medium;
+	RULE 11 : IF H3K4Me1 IS yes AND H3K4Me1_other IS Many THEN score IS RHigh;
+	RULE 12 : IF H3K4Me1 IS no AND H3K4Me1_other IS Few THEN score IS RSmall;
+	RULE 13 : IF H3K4Me1 IS no AND H3K4Me1_other IS Many THEN score IS Medium;
+
+	RULE 14 : IF H3K27Ac IS yes AND H3K27Ac_other IS Few THEN score IS Medium;
+	RULE 15 : IF H3K27Ac IS yes AND H3K27Ac_other IS Many THEN score IS RHigh;
+	RULE 16 : IF H3K27Ac IS no AND H3K27Ac_other IS Few THEN score IS RSmall;
+	RULE 17 : IF H3K27Ac IS no AND H3K27Ac_other IS Many THEN score IS Medium;
+
+	RULE 18 : IF H3K4Me3 IS yes AND H3K4Me3_other IS Few THEN score IS Medium;
+	RULE 19 : IF H3K4Me3 IS yes AND H3K4Me3_other IS Many THEN score IS RHigh;
+	RULE 20 : IF H3K4Me3 IS no AND H3K4Me3_other IS Few THEN score IS RSmall;
+	RULE 21 : IF H3K4Me3 IS no AND H3K4Me3_other IS Many THEN score IS Medium;
+END_RULEBLOCK
+
+
+
+END_FUNCTION_BLOCK
+
+//////////
+//////////
+
+FUNCTION_BLOCK regulation_onlyCL // Block definition
+
+// Define input variables
+VAR_INPUT				
+	DNase : REAL;
+	H3K4Me1 : REAL;
+	H3K27Ac : REAL;
+	H3K4Me3 : REAL;
+        tfsInCl : REAL;
+	motif : REAL;
+END_VAR
+
+// Define output variable
+VAR_OUTPUT		
+	score : REAL;
+END_VAR
+// Fuzzify input variable 'DNase' and histones (in assay cell line)
+FUZZIFY DNase
+	TERM no := 0 ; 
+	TERM yes := 1 ;
+END_FUZZIFY
+
+FUZZIFY H3K4Me1
+	TERM no := 0 ; 
+	TERM yes := 1 ;
+END_FUZZIFY
+
+FUZZIFY H3K27Ac
+	TERM no := 0 ; 
+	TERM yes := 1 ;
+END_FUZZIFY
+
+FUZZIFY H3K4Me3	
+	TERM no := 0 ; 
+	TERM yes := 1 ;
+END_FUZZIFY
+
+
+// TFB sites in cell line
+FUZZIFY tfsInCl			
+	TERM None := (0,1) (0.05,0);
+	TERM Few := (0,0) (0.05,1) (0.15,1) (0.3,0);
+	TERM Many := (0.15,0) (0.4,1) (1,1);
+END_FUZZIFY
+
+// TFB Site motif
+FUZZIFY motif
+	TERM Small := (0,1) (0.15,1) (0.4,0);
+	TERM Medium := (0.25,0) (0.45,1) (0.55,1) (0.75,0);
+	TERM High := (0.6,0) (0.8,1) (1,1);
+END_FUZZIFY
+
+
+// Defuzzify output variable 'score'
+DEFUZZIFY score			
+	TERM Small := (0,1) (0.15,1) (0.35,0);
+	TERM RSmall := (0.15,0) (0.3,1) (0.45,0);
+	TERM Medium := (0.3,0) (0.5,1) (0.7,0);
+	TERM RHigh := (0.55,0) (0.7,1) (0.85,0);
+	TERM High := (0.65,0) (0.85,1) (1,1);
+	METHOD : COG;	// Use 'Center Of Gravity' defuzzification method
+	DEFAULT := 0;	// Default value is 0 (if no rule activates defuzzifier)
+END_DEFUZZIFY
+
+
+// Inference rules
+RULEBLOCK No2
+	AND : MIN;	// Use 'min' for 'and'
+	ACT : MIN;	// Use 'min' activation method
+	ACCU : MAX;	// Use 'max' accumulation method
+
+	RULE 1 : IF tfsInCl IS Few THEN score IS Medium;
+	RULE 2 : IF tfsInCl IS Many THEN score IS RHigh;
+
+	RULE 3 : IF motif IS Small THEN score IS Medium;
+	RULE 4 : IF motif IS Medium THEN score IS RHigh;
+	RULE 5 : IF motif IS High THEN score IS High;
+
+	RULE 6 : IF DNase IS yes THEN score IS Medium;
+
+	RULE 7 : IF H3K4Me1 IS yes THEN score IS Medium;
+
+	RULE 8 : IF H3K27Ac IS yes THEN score IS Medium;
+
+	RULE 9 : IF H3K4Me3 IS yes THEN score IS Medium;
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
