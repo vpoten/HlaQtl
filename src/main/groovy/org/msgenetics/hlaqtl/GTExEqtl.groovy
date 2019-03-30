@@ -21,7 +21,7 @@ class GTExEqtl {
     
     String path
     
-    static final regEgenes = /(\w+).v7.egenes.txt.gz/
+    static final regEgenes = /([\w-]+).v7.egenes.txt.gz/
     static final suffEgenes = '.v7.egenes.txt.gz'
     
     // Columns for egenes v7 file:
@@ -44,7 +44,7 @@ class GTExEqtl {
         ColumnType.STRING, //ref:  reference sequence of the variant
         ColumnType.STRING, //alt:  alternate sequence of the variant
         ColumnType.INTEGER, //num_alt_per_site:  number of alternative alleles observed at this site
-        ColumnType.STRING, //rs_id_dbSNP142_GRCh37p13:  dbSNP142 rsID
+        ColumnType.STRING, //rs_id_dbSNP147_GRCh37p13:  dbSNP142 rsID
         ColumnType.INTEGER, //minor_allele_samples:  number of samples carrying the minor allele
         ColumnType.INTEGER, //minor_allele_count:  total number of minor alleles across individuals
         ColumnType.DOUBLE, //maf:  minor allele frequency observed in the set of donors for a given tissue
