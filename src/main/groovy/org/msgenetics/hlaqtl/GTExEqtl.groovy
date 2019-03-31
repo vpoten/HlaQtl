@@ -7,7 +7,9 @@
 package org.msgenetics.hlaqtl
 
 import tech.tablesaw.api.Table;
-import tech.tablesaw.api.ColumnType;
+import tech.tablesaw.api.ColumnType
+import tech.tablesaw.api.DoubleColumn
+import tech.tablesaw.api.StringColumn
 import tech.tablesaw.io.csv.CsvReadOptions
 
 
@@ -84,6 +86,33 @@ class GTExEqtl {
         Table table = Table.read().usingOptions(options);
 
         return table
+    }
+    
+    /**
+     * Get a table with the best-eqtls from all tissues
+     */
+    static Table getBestEqtlsAllTissues(String path, Double pvalThr) {
+        GTExEqtl instance = new GTExEqtl(path: path)
+        int pvalColIndex = 28 //qval
+        
+        def filteredTables = instance.getTissues().collect( {tissue -> 
+                Table table = instance.loadTable(tissue)
+                
+                // apply p-value threshold
+                def column = (DoubleColumn) table.column(pvalColIndex)
+                table = table.where(column.isLessThan(pvalThr))
+                
+                // add tissue column to the filtered table
+                column = StringColumn.create("tissue", table.rowCount())
+                (0..table.rowCount()-1).each({column.set(it, tissue)})
+                table.addColumns(column)
+                return table
+            })
+        
+        def result = filteredTables[0]
+        (1..filteredTables.size()-1).each({result.append(filteredTables[it])})
+        result.setName("best-eqtls-all-tissues")
+        return result
     }
 }
 

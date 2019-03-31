@@ -5,6 +5,7 @@
  */
 package org.msgenetics.hlaqtl;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -75,5 +76,33 @@ public class GTExEqtlTest {
         int num = filtered.rowCount();
         assertTrue(num < 23935);
         assertTrue(num > 0);
+    }
+    
+    @Test
+    public void testLoadAllTissues() {
+        GTExEqtl instance = new GTExEqtl();
+        instance.setPath(dataPath);
+        
+        List<String> tissues = (List<String>) instance.getTissues();
+        List<Table> tables = new ArrayList<Table>();
+        
+        for(String tissue : tissues) {
+            Table table = instance.loadTable(tissue);
+            assertNotNull(table);
+            assertTrue(table.rowCount() > 1000);
+            tables.add(table);
+        }
+        
+        assertEquals(tables.size(), 48);
+    }
+    
+    @Test
+    public void testGetBestEqtlsAllTissues() {
+        Table table = GTExEqtl.getBestEqtlsAllTissues(dataPath, 0.01);
+        assertTrue(table.rowCount() > 1000);
+        assertTrue(table.name().startsWith("best-eqtls"));
+        
+        Table table2 = GTExEqtl.getBestEqtlsAllTissues(dataPath, 0.001);
+        assertTrue(table.rowCount() > table2.rowCount());
     }
 }
