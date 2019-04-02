@@ -5,6 +5,7 @@
  */
 package org.msgenetics.hlaqtl;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.After;
@@ -104,5 +105,11 @@ public class GTExEqtlTest {
         
         Table table2 = GTExEqtl.getBestEqtlsAllTissues(dataPath, 0.001);
         assertTrue(table.rowCount() > table2.rowCount());
+        
+//        Table table3 = GTExEqtl.getBestEqtlsAllTissues(dataPath, 0.05);
+//        try {
+//            table3.write().csv("/home/victor/GTEx_Analysis_v7_eQTL.all.csv");
+//        } catch(IOException ex) {
+//        }
     }
 }
