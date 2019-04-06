@@ -9,6 +9,8 @@ import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
+import java.util.ArrayList;
+import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -20,12 +22,14 @@ import org.json.JSONObject;
 public class EnsemblRestClient {
     private final String server;
     private final int requestPerSecond;
+    private final int maxPost;
     private int requestCount = 0;
     private long limitStartTime = System.currentTimeMillis();
 
-    public EnsemblRestClient(String server, int requestPerSecond) {
+    public EnsemblRestClient(String server, int requestPerSecond, int maxPost) {
         this.server = server;
         this.requestPerSecond = requestPerSecond;
+        this.maxPost = maxPost;
     }
 
     public static void main(String[] args) throws InterruptedException, UnirestException {
@@ -38,7 +42,7 @@ public class EnsemblRestClient {
             symbol = args[1];
         }
 
-        EnsemblRestClient client = new EnsemblRestClient("http://rest.ensembl.org", 15);
+        EnsemblRestClient client = new EnsemblRestClient("http://rest.ensembl.org", 15, 200);
         client.printVariants(species, symbol);
     }
 
@@ -46,7 +50,7 @@ public class EnsemblRestClient {
         String geneId = getGeneId(species, symbol);
 
         String url = String.format("%s/overlap/id/%s?feature=variation", server, geneId);
-        JSONArray variants = fetchJson(url).getArray();
+        JSONArray variants = fetchJson(url, "get", null).getArray();
         for (int i = 0; i < variants.length(); i++) {
             JSONObject variant = variants.getJSONObject(i);
             String srName = variant.getString("seq_region_name");
@@ -62,7 +66,7 @@ public class EnsemblRestClient {
 
     private String getGeneId(String species, String symbol) throws UnirestException, InterruptedException {
         String url = String.format("%s/xrefs/symbol/%s/%s?object_type=gene", server, species, symbol);
-        JSONArray genes = fetchJson(url).getArray();
+        JSONArray genes = fetchJson(url, "get", null).getArray();
 
         if (genes.length() == 0) {
             throw new IllegalArgumentException(String.format("No gene id for %s symbol %s", species, symbol));
@@ -70,12 +74,37 @@ public class EnsemblRestClient {
             return genes.getJSONObject(0).getString("id");
         }
     }
+    
+    public List getSnps(List<String> ids, String species) throws UnirestException, InterruptedException {
+        String url = String.format("%s/variation/%s", server, species);
+        
+        List result = new ArrayList();
+        int start = 0;
 
-    private JsonNode fetchJson(String url) throws UnirestException, InterruptedException {
+        while(start < ids.size()) {
+            // TODO
+            // build body: { "ids" : ["rs116035550", "COSM476" ] }
+        }
+
+        return result;
+    }
+
+    private JsonNode fetchJson(String url, String method, String body) throws UnirestException, InterruptedException {
         rateLimit();
-        HttpResponse<JsonNode> response = Unirest.get(url)
-                        .header("Content-Type", "application/json")
-                        .asJson();
+        HttpResponse<JsonNode> response;
+        
+        if (method.compareTo("get") == 0) {
+            response = Unirest.get(url)
+                    .header("Content-Type", "application/json")
+                    .asJson();
+        } else {
+            response = Unirest.post(url)
+                    .header("Accept", "application/json")
+                    .header("Content-Type", "application/json")
+                    .body(body)
+                    .asJson();
+        }
+        
         String retryHeader = response.getHeaders().getFirst("Retry-After");
 
         if (response.getStatus() == 200) {
@@ -83,7 +112,7 @@ public class EnsemblRestClient {
         } else if (response.getStatus() == 429 && retryHeader != null) {
             Long waitSeconds = Long.valueOf(retryHeader);
             Thread.sleep(waitSeconds * 1000);
-            return fetchJson(url);
+            return fetchJson(url, method, body);
         } else {
             throw new IllegalArgumentException("No data at " + url);
         }
