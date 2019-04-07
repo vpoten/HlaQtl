@@ -93,7 +93,7 @@ public class EnsemblRestClient {
         return snp;
     }
     
-    public List getSnps(List<String> ids, String species) throws UnirestException, InterruptedException {
+    public List<SNPData> getSnps(List<String> ids, String species) throws UnirestException, InterruptedException {
         String url = String.format("%s/variation/%s", server, species);
         
         List result = new ArrayList();

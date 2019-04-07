@@ -7,6 +7,7 @@ package org.msgenetics.hlaqtl;
 
 import com.mashape.unirest.http.exceptions.UnirestException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -14,6 +15,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
+
+import org.ngsutils.variation.SNPData;
 
 /**
  *
@@ -50,8 +53,14 @@ public class EnsemblRestClientTest {
         ids.add("rs10984447");
         
         EnsemblRestClient instance = new EnsemblRestClient("http://grch37.rest.ensembl.org", 15, 200);
-        List result = instance.getSnps(ids, "human");
+        List<SNPData> result = instance.getSnps(ids, "human");
         assertNotNull(result);
         assertEquals(result.size(), ids.size());
+        
+        HashSet<String> idsSet = new HashSet<String>(ids);
+        
+        for(int i=0; i<result.size(); i++) {
+            assertTrue(idsSet.contains(result.get(i).getId()));
+        }
     }
 }
