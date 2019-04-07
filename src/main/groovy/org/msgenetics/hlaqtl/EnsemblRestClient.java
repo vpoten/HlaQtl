@@ -10,7 +10,9 @@ import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import groovy.json.JsonOutput;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -82,8 +84,16 @@ public class EnsemblRestClient {
         int start = 0;
 
         while(start < ids.size()) {
-            // TODO
-            // build body: { "ids" : ["rs116035550", "COSM476" ] }
+            HashMap<String, List<String>> requestBody = new HashMap<String, List<String>>();
+            int end = (start + this.maxPost > ids.size()) ? ids.size() : start + this.maxPost;
+            requestBody.put("ids", ids.subList(start, end));
+            JSONObject snps = fetchJson(url, "post", JsonOutput.toJson(requestBody)).getObject();
+            
+            for(Object key : snps.keySet()) {
+                result.add((String)key);
+            }
+            
+            start +=  snps.length();
         }
 
         return result;

@@ -5,6 +5,9 @@
  */
 package org.msgenetics.hlaqtl;
 
+import com.mashape.unirest.http.exceptions.UnirestException;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -37,9 +40,13 @@ public class EnsemblRestClientTest {
     public void tearDown() {
     }
 
-    // TODO add test methods here.
-    // The methods must be annotated with annotation @Test. For example:
-    //
-    // @Test
-    // public void hello() {}
+    @Test
+    public void getSnps() throws UnirestException, InterruptedException {
+        ArrayList<String> ids = new ArrayList<String>();
+        ids.add("rs12722489");
+        
+        EnsemblRestClient instance = new EnsemblRestClient("http://grch37.rest.ensembl.org", 15, 200);
+        List result = instance.getSnps(ids, "human");
+        assertNotNull(result);
+    }
 }
