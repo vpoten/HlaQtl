@@ -16,6 +16,7 @@ import groovy.json.JsonOutput;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import org.ngsutils.variation.SNPData;
 
 /**
  *
@@ -77,6 +78,21 @@ public class EnsemblRestClient {
         }
     }
     
+    private SNPData parseJSONObjectSNP(JSONObject snpObj) {
+        SNPData snp = new SNPData();
+        snp.setId(snpObj.getString("name"));
+        snp.setMaf(snpObj.getDouble("MAF"));
+        snp.setMinor(snpObj.getString("minor_allele"));
+        
+        JSONObject mapping = snpObj.getJSONArray("mappings").getJSONObject(0);
+        
+        snp.setChr(mapping.getString("seq_region_name"));
+        snp.setPosition(mapping.getInt("start"));
+        snp.setAlleles(mapping.getString("allele_string"));
+        
+        return snp;
+    }
+    
     public List getSnps(List<String> ids, String species) throws UnirestException, InterruptedException {
         String url = String.format("%s/variation/%s", server, species);
         
@@ -90,7 +106,7 @@ public class EnsemblRestClient {
             JSONObject snps = fetchJson(url, "post", JsonOutput.toJson(requestBody)).getObject();
             
             for(Object key : snps.keySet()) {
-                result.add((String)key);
+                result.add(parseJSONObjectSNP(snps.getJSONObject((String)key)));
             }
             
             start +=  snps.length();
