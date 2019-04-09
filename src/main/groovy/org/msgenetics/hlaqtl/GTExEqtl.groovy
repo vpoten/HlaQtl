@@ -10,6 +10,7 @@ import tech.tablesaw.api.Table;
 import tech.tablesaw.api.ColumnType
 import tech.tablesaw.api.DoubleColumn
 import tech.tablesaw.api.StringColumn
+import tech.tablesaw.api.IntColumn
 import tech.tablesaw.io.csv.CsvReadOptions
 
 
@@ -93,13 +94,12 @@ class GTExEqtl {
      */
     static Table getBestEqtlsAllTissues(String path, Double pvalThr) {
         GTExEqtl instance = new GTExEqtl(path: path)
-        int pvalColIndex = 28 //qval
         
         def filteredTables = instance.getTissues().collect( {tissue -> 
                 Table table = instance.loadTable(tissue)
                 
                 // apply p-value threshold
-                def column = (DoubleColumn) table.column(pvalColIndex)
+                def column = (DoubleColumn) table.doubleColumn('qval')
                 table = table.where(column.isLessThan(pvalThr))
                 
                 // add tissue column to the filtered table
@@ -113,6 +113,16 @@ class GTExEqtl {
         (1..filteredTables.size()-1).each({result.append(filteredTables[it])})
         result.setName("best-eqtls-all-tissues")
         return result
+    }
+    
+    /**
+     * Filter eqtls by region 
+     */
+    static Table filterByRegion(Table srcTable, String chr, int start, int end) {
+        def chrCol = (StringColumn) srcTable.stringColumn('chr')
+        def snpPosCol = (IntColumn) srcTable.intColumn('pos')
+        
+        return srcTable.where(chrCol.isEqualTo(chr).and(snpPosCol.isBetweenInclusive(start, end)));
     }
 }
 
