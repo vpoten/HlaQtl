@@ -27,15 +27,7 @@ import java.util.logging.Level
 import java.util.logging.Logger
 import org.msgenetics.hlaqtl.CompletionReporter
 
-/**
- *
- */
-class LDResult {
-    SNPData snpBestCis
-    SNPData snpTrans
-    SNPData snpFeat = null
-    Double rSq
-}//
+
 
 /**
  *

@@ -102,10 +102,10 @@ public class JobGeneratorTest {
         System.out.println("TestCufflinks");
         
         String input = "output://tophat_NA11881/";
-        JobDataBean data = JobGenerator.cufflinks(subject, input, null);
+        JobDataBean data = JobGenerator.cufflinks(subject, input, null, false);
         assertNotNull(data);
         
-        data = JobGenerator.cufflinks(subject, input, "annotations://9606/refGene.gtf");
+        data = JobGenerator.cufflinks(subject, input, "annotations://9606/refGene.gtf", false);
         assertNotNull(data);
         assertTrue( data.getUrl().contains("_ref_NA11881") );
         

@@ -5,37 +5,8 @@
 
 package org.msgenetics.hlaqtl
 
-/**
- *
- */
-class AlignResult {
-    Integer score = null
-    Integer scoreBits = null
-    Double expect = null
-    Double identities
-    Double gaps
-    String strand
-}
-
-/**
- *
- */
-class BLASTResult {
-    List<AlignResult> alignments = []
-    String query = null
-    String subject = null
-    Integer queryLength = null
-    Integer subjectLength = null
-    
-    Integer totalScore() {
-        alignments.sum{it.score}
-    }
-    
-    Double averageIdent() {
-        Double total = alignments.sum{it.identities}
-        return (total==null) ? null : (total/(double)alignments.size())
-    }
-}
+import org.msgenetics.hlaqtl.BLASTResult
+import org.msgenetics.hlaqtl.AlignResult
 
 /**
  *
