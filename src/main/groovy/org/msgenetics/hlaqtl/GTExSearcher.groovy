@@ -20,26 +20,29 @@ class GTExSearcher {
     
     static final String ENSEMBL_REST_API = 'http://grch37.rest.ensembl.org'
     
-    // list of query snps (rs ids)
+    /** list of query snps (rs ids) */
     List<String> queryIds = []
     
-    // size of region around query SNPs
+    /** size of region around query SNPs */
     int snpRegionSize = 10000000
     
-    // GTEx eqtl data
+    /** GTEx eqtl data */
     String gtexDir = null
     
-    // working directory
+    /** working directory */
     String  workDir = null
     
-    // GTEx tissues where to filter the eqtls (all by default)
+    /** GTEx tissues where to filter the eqtls (all by default) */
     List<String> tissues = null
     
-    // Eqtl p-value threshold to filter best eqtls
+    /** eqtl p-value threshold to filter best eqtls */
     double eqtlThr = 0.05d
     
-    // LD threshold to filter resuklts
+    /** LD threshold to filter results */
     double ldThr = 0.5d
+    
+    /** keep cache of tped files */
+    boolean useCache = true
     
     
     /**
