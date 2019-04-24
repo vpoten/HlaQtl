@@ -93,11 +93,11 @@ class SNPManager {
      Base-pair position (bp units)
      */
     
-    static final String _1000G_FTP = 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20110521/'
-    static final String S3_VCF_FILE = 'ALL.{chr}.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz'
-    static final String S3_VCF_TBI = 'ALL.{chr}.phase1_release_v3.20101123.snps_indels_svs.genotypes.vcf.gz.tbi'
-    static final String S3_VCF_URL = 's3://1000genomes/release/20110521/'
-    static def regexVcf = /ALL\.(\w+)\.phase1_release_v3\.20101123\.snps_indels_svs\.genotypes\.vcf\.gz/
+    static final String _1000G_FTP = 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/'
+    static final String S3_VCF_FILE = 'ALL.{chr}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz'
+    static final String S3_VCF_TBI = 'ALL.{chr}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz.tbi'
+    static final String S3_VCF_URL = 's3://1000genomes/release/20110521/'  // TODO update s3 url
+    static def regexVcf = /ALL\.(\w+)\.phase3_shapeit2_mvncall_integrated_v5a\.20130502\.genotypes\.vcf\.gz/
     
     def hmSnps = [:] as TreeMap //map of selected SNPs {snp_id, SNPData} (HapMap)
     def hmSortSnps = [] //snps sorted by position (HapMap)

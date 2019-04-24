@@ -8,6 +8,7 @@ package org.msgenetics.hlaqtl
 
 import tech.tablesaw.api.Table
 
+import org.msgenetics.hlaqtl.eqtl.SNPManager
 import org.ngsutils.variation.SNPData
 import org.msgenetics.hlaqtl.eqtl.GTExEqtl
 
@@ -30,7 +31,10 @@ class GTExSearcher {
     String gtexDir = null
     
     /** working directory */
-    String  workDir = null
+    String workDir = null
+    
+    /** 1000 genomes (vcf + tbi) directory */
+    String genomesDir = null
     
     /** GTEx tissues where to filter the eqtls (all by default) */
     List<String> tissues = null
@@ -43,6 +47,9 @@ class GTExSearcher {
     
     /** keep cache of tped files */
     boolean useCache = true
+    
+    /** list of subjects to use */
+    List<String> subjects
     
     
     /**
@@ -80,7 +87,15 @@ class GTExSearcher {
             }
         }
         
-        // TODO Obtain tped files from 1000genomes vcfs
+        // Obtain tped files from 1000genomes vcfs
+        chrRegions.each { chr, regions ->
+            int start = regions.min{ it[0] }
+            int end = regions.max{ it[1] }
+            def locusStr = "${chr}:${start}-${end}"
+            def vcfFile = SNPManager.S3_VCF_FILE.replace('{chr}', chr)
+            def groups = []
+            SNPManager.loadSNPData(subjects, workDir, vcfFile, groups, locusStr, true, null)
+        }
         
         // TODO Load SNPData from tped files for all snps: query + eqtl
         
