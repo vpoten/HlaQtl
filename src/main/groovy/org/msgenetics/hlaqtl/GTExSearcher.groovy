@@ -71,7 +71,7 @@ class GTExSearcher {
                     chrRegions[snp.chrNum] = []
                 }
                 def start = (snp.position - snpRegionSize) < 1 ? 1 : snp.position - snpRegionSize
-                chrRegions[snp.chrNum] << new Tuple(start, snp.position + snpRegionSize, {})
+                chrRegions[snp.chrNum] << new Tuple(start, snp.position + snpRegionSize, ['snp': snp])
             }
         
         // sort chr regions by start position
@@ -83,7 +83,7 @@ class GTExSearcher {
         chrRegions.each { chr, regions ->
             regions.each { region ->
                 Table result = GTExEqtl.filterByRegion(bestEqtls, chr, region[0], region[1])
-                regions[3]['eqtls'] = result
+                regions[2]['eqtls'] = result
             }
         }
         
@@ -95,9 +95,25 @@ class GTExSearcher {
             def vcfFile = SNPManager.S3_VCF_FILE.replace('{chr}', chr)
             def groups = []
             SNPManager.loadSNPData(subjects, workDir, vcfFile, groups, locusStr, true, null)
+            // TODO check if the generated .tped file should be renamed
         }
         
-        // TODO Load SNPData from tped files for all snps: query + eqtl
+        //  Load SNPData from tped files for all snps: query + eqtl
+        def snpMap = [:] as TreeMap
+        
+        chrRegions.each { chr, regions ->
+            tpedFile = "${SNPManager._1000G_PED}.tped"
+            snps = [] as TreeSet
+            
+            regions.each { region->
+                // add the snp that leads the region and all the snps in associated eqtls
+                snps << region[3].snp.id
+                Table eqtls = region[2].eqtls
+                snps += eqtls.stringColumn('rs_id_dbSNP147_GRCh37p13').asSet().findAll{ it!=null }
+            }
+            
+            SNPData.createFromTped(tpedFile, snps, snpMap)
+        }
         
         // TODO LD calculation between query snps and eqtl snps in region
         
