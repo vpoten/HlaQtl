@@ -77,26 +77,26 @@ class GTExSearcher {
                     chrRegions[snp.chrNum] = []
                 }
                 def start = (snp.position - snpRegionSize) < 1 ? 1 : snp.position - snpRegionSize
-                chrRegions[snp.chrNum] << new Tuple(start, snp.position + snpRegionSize, ['snp': snp])
+                chrRegions[snp.chrNum] << ['start': start, 'end': snp.position + snpRegionSize, 'snp': snp]
             }
         
         // sort chr regions by start position
         for(String chr : chrRegions.keySet()) {
-            Collections.sort(schrRegions[chr], [compare: {a, b -> a[0] <=> b[0]}] as Comparator)
+            Collections.sort(schrRegions[chr], [compare: {a, b -> a.start <=> b.start}] as Comparator)
         }
         
         // Associate eqtls with regions
         chrRegions.each { chr, regions ->
             regions.each { region ->
-                Table result = GTExEqtl.filterByRegion(bestEqtls, chr, region[0], region[1])
-                regions[2]['eqtls'] = result
+                Table result = GTExEqtl.filterByRegion(bestEqtls, chr, region.start, region.end)
+                regions['eqtls'] = result
             }
         }
         
         // Obtain tped files from 1000genomes vcfs
         chrRegions.each { chr, regions ->
-            int start = regions.min{ it[0] }
-            int end = regions.max{ it[1] }
+            int start = regions.min{ it.start }
+            int end = regions.max{ it.end }
             def locusStr = "${chr}:${start}-${end}"
             def vcfFile = SNPManager.S3_VCF_FILE.replace('{chr}', chr)
             def groups = []
@@ -113,10 +113,10 @@ class GTExSearcher {
             
             regions.each { region->
                 // add the snp that leads the region and all the snps in associated eqtls
-                snps << region[2].snp.id
-                Table eqtls = region[2].eqtls
+                snps << region.snp.id
+                Table eqtls = region.eqtls
                 def regionSnps = eqtls.stringColumn('rs_id_dbSNP147_GRCh37p13').asSet().findAll{ it!=null }
-                region[2]['region_snps'] = regionSnps
+                region['region_snps'] = regionSnps
                 snps += regionSnps
             }
             
@@ -124,7 +124,7 @@ class GTExSearcher {
         }
         
         // LD calculation between query snps and eqtl snps in region
-        results = regionLDCalc(chrRegions, snpsData)
+        regionLDCalc(chrRegions, snpsData)
         
         // TODO final result
     }
@@ -133,47 +133,34 @@ class GTExSearcher {
      *
      */
     private def regionLDCalc(chrRegions, snpsData) {
-        def results = [:] as TreeMap
-        def writerLock = new Object()
+        // collect all regions
+        def allRegions = chrRegions.collect({chr, regions -> regions}).flatten()
         
-        // TODO save results in region
-        snpsQuery.each{ id-> //init results map
-            results[id] = [:] as TreeMap
-        }
-        
-        // TODO collect all regions
-        
-        //closure for LD calculation (threaded)
+        // closure for LD calculation (threaded)
         def lDThreadCalc = { thread, totalThrs ->
-            def thrLdRsqResults = [:] as TreeMap
-            
-            // TODO assign index to region to divide jobs among threads
-            snpsQuery.each{ current-> 
-                thrLdRsqResults[current] = [:] as TreeMap
-                def data1 = snpsData[current]
+            // assign index to region to divide jobs among threads
+            allRegions.eachWithIndex{ region, i-> 
+                if ((i % totalThrs) == thread) {
+                    region['ld_results'] = [:] as TreeMap
+                    def data1 = region.snp
+                    def current = region.snp.id
 
-                allSnps.eachWithIndex{ snpId, i->
-                    if( (i%totalThrs)==thread && current!=snpId ){
-                        def data2 = snpsData[snpId]
-                        Double rSq = calcLD(data1, data2)
-
-                        if( rSq!=null ){ thrLdRsqResults[current][snpId] = rSq }
+                    region['region_snps'].each { snpId ->
+                        if( current != snpId ) {
+                            def data2 = snpsData[snpId]
+                            Double rSq = calcLD(data1, data2)
+                            if( rSq!=null ) {
+                                region['ld_results'][snpId] = rSq
+                            }
+                        }
                     }
                 }
             }
-            
-            // TODO will be not necessary
-            synchronized(writerLock) {
-                // add thread results to instance results
-                thrLdRsqResults.each{ snp1, map-> map.each{ snp2, res-> results[snp1][snp2] = res } }
-            }
-        }//end lDThreadCalc closure
+        }// end lDThreadCalc closure
         
-        //run lDThreadCalc in threads
+        // run lDThreadCalc in threads
         def closures = (1..nThreads).collect{ (Closure) {lDThreadCalc(it - 1, nThreads)} }
         Utils.runClosures(closures, nThreads )
-        
-        return results
     }
 }
 
