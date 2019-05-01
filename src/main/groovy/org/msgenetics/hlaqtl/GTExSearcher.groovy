@@ -95,6 +95,7 @@ class GTExSearcher {
         
         // Obtain tped files from 1000genomes vcfs
         chrRegions.each { chr, regions ->
+            // TODO use the complete chromosome
             int start = regions.min{ it.start }
             int end = regions.max{ it.end }
             def locusStr = "${chr}:${start}-${end}"
