@@ -8,8 +8,11 @@ package org.msgenetics.hlaqtl
 
 import tech.tablesaw.api.Table
 
-import org.msgenetics.hlaqtl.eqtl.SNPManager
+import org.ngsutils.Utils
 import org.ngsutils.variation.SNPData
+
+import org.msgenetics.hlaqtl.eqtl.LDCalculator
+import org.msgenetics.hlaqtl.eqtl.SNPManager
 import org.msgenetics.hlaqtl.eqtl.GTExEqtl
 
 
@@ -50,6 +53,9 @@ class GTExSearcher {
     
     /** list of subjects to use */
     List<String> subjects
+    
+    /** Number of threads to use in LD calculation */
+    int nThreads = 4
     
     
     /**
@@ -99,7 +105,7 @@ class GTExSearcher {
         }
         
         //  Load SNPData from tped files for all snps: query + eqtl
-        def snpMap = [:] as TreeMap
+        def snpsData = [:] as TreeMap
         
         chrRegions.each { chr, regions ->
             tpedFile = "${SNPManager._1000G_PED}.tped"
@@ -107,17 +113,67 @@ class GTExSearcher {
             
             regions.each { region->
                 // add the snp that leads the region and all the snps in associated eqtls
-                snps << region[3].snp.id
+                snps << region[2].snp.id
                 Table eqtls = region[2].eqtls
-                snps += eqtls.stringColumn('rs_id_dbSNP147_GRCh37p13').asSet().findAll{ it!=null }
+                def regionSnps = eqtls.stringColumn('rs_id_dbSNP147_GRCh37p13').asSet().findAll{ it!=null }
+                region[2]['region_snps'] = regionSnps
+                snps += regionSnps
             }
             
-            SNPData.createFromTped(tpedFile, snps, snpMap)
+            SNPData.createFromTped(tpedFile, snps, snpsData)
         }
         
-        // TODO LD calculation between query snps and eqtl snps in region
+        // LD calculation between query snps and eqtl snps in region
+        results = regionLDCalc(chrRegions, snpsData)
         
         // TODO final result
+    }
+    
+    /**
+     *
+     */
+    private def regionLDCalc(chrRegions, snpsData) {
+        def results = [:] as TreeMap
+        def writerLock = new Object()
+        
+        // TODO save results in region
+        snpsQuery.each{ id-> //init results map
+            results[id] = [:] as TreeMap
+        }
+        
+        // TODO collect all regions
+        
+        //closure for LD calculation (threaded)
+        def lDThreadCalc = { thread, totalThrs ->
+            def thrLdRsqResults = [:] as TreeMap
+            
+            // TODO assign index to region to divide jobs among threads
+            snpsQuery.each{ current-> 
+                thrLdRsqResults[current] = [:] as TreeMap
+                def data1 = snpsData[current]
+
+                allSnps.eachWithIndex{ snpId, i->
+                    if( (i%totalThrs)==thread && current!=snpId ){
+                        def data2 = snpsData[snpId]
+                        Double rSq = calcLD(data1, data2)
+
+                        if( rSq!=null ){ thrLdRsqResults[current][snpId] = rSq }
+                    }
+                }
+            }
+            
+            // TODO will be not necessary
+            synchronized(writerLock) {
+                // add thread results to instance results
+                thrLdRsqResults.each{ snp1, map-> map.each{ snp2, res-> results[snp1][snp2] = res } }
+            }
+        }//end lDThreadCalc closure
+        
+        //run lDThreadCalc in threads
+        def closures = (1..nThreads).collect{ (Closure) {lDThreadCalc(it - 1, nThreads)} }
+        Utils.runClosures(closures, nThreads )
+        
+        return results
     }
 }
 
