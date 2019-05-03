@@ -10,6 +10,7 @@ import tech.tablesaw.api.Table
 
 import org.ngsutils.Utils
 import org.ngsutils.variation.SNPData
+import tech.tablesaw.api.StringColumn
 
 import org.msgenetics.hlaqtl.eqtl.LDCalculator
 import org.msgenetics.hlaqtl.eqtl.SNPManager
@@ -116,7 +117,7 @@ class GTExSearcher {
                 // add the snp that leads the region and all the snps in associated eqtls
                 snps << region.snp.id
                 Table eqtls = region.eqtls
-                def regionSnps = eqtls.stringColumn('rs_id_dbSNP147_GRCh37p13').asSet().findAll{ it!=null }
+                StringColumn  regionSnps = (StringColumn) eqtls.stringColumn('rs_id_dbSNP147_GRCh37p13').asSet().findAll{ it!=null }
                 region['region_snps'] = regionSnps
                 snps += regionSnps
             }
@@ -127,7 +128,28 @@ class GTExSearcher {
         // LD calculation between query snps and eqtl snps in region
         regionLDCalc(chrRegions, snpsData)
         
-        // TODO final result
+        // Final result
+        chrRegions.each { chr, regions ->
+            regions.each { region->
+                // get snpIds with rSq > threshold
+                def ldResultsPass = region['ld_results'].findAll({ snpId, rSq -> rSq > ldThr})
+                
+                // create the final result table for the region: eqtl table + extra columns:
+                // extra columns: region_snp, region_snp_position, ld_rsq
+                Table eqtls = region.eqtls
+                StringColumn regionSnps = (StringColumn) eqtls.stringColumn('rs_id_dbSNP147_GRCh37p13')
+                Table result = eqtls.filter(regionSnps.isIn(ldResultsPass.keySet()))
+                
+                StringColumn resultSnps = (StringColumn) result.stringColumn('rs_id_dbSNP147_GRCh37p13')
+                // create extra columns
+                // TODO
+                
+                // add the columns to the result table
+                // TODO
+                
+                // TODO write/append final table to csv file in disk
+            }
+        }
     }
     
     /**
