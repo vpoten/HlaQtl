@@ -5,7 +5,6 @@
  */
 package org.msgenetics.hlaqtl;
 
-import java.util.List;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -17,9 +16,9 @@ import static org.junit.Assert.*;
  *
  * @author victor
  */
-public class IGSRSamplesTest {
+public class GTExSearcherTest {
     
-    public IGSRSamplesTest() {
+    public GTExSearcherTest() {
     }
     
     @BeforeClass
@@ -37,14 +36,10 @@ public class IGSRSamplesTest {
     @After
     public void tearDown() {
     }
+
     
     @Test
-    public void create() {
-        IGSRSamples instance = IGSRSamples.create();
-        assertNotNull(instance);
-        String [] populations = {"CEU"};
-        List<String> result = instance.getSubjects(populations);
-        assertNotNull(result);
-        assertTrue(result.size() > 100);
+    public void perform() {
+        // TODO
     }
 }

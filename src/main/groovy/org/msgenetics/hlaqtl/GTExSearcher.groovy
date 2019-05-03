@@ -27,13 +27,13 @@ class GTExSearcher {
     /** list of query snps (rs ids) */
     List<String> queryIds = []
     
-    /** size of region around query SNPs */
+    /** Size of region around query SNPs */
     int snpRegionSize = 10000000
     
     /** GTEx eqtl data */
     String gtexDir = null
     
-    /** working directory */
+    /** Working directory */
     String workDir = null
     
     /** 1000 genomes (vcf + tbi) directory */
@@ -48,10 +48,10 @@ class GTExSearcher {
     /** LD threshold to filter results */
     double ldThr = 0.5d
     
-    /** keep cache of tped files */
+    /** Keep cache of tped files */
     boolean useCache = true
     
-    /** list of subjects to use */
+    /** List of subjects to use */
     List<String> subjects
     
     /** Number of threads to use in LD calculation */
@@ -162,6 +162,13 @@ class GTExSearcher {
         // run lDThreadCalc in threads
         def closures = (1..nThreads).collect{ (Closure) {lDThreadCalc(it - 1, nThreads)} }
         Utils.runClosures(closures, nThreads )
+    }
+    
+    /**
+     * Set subjects to use in calculations
+     */
+    def setSubjects(populations) {
+        subjects = IGSRSamples.create().getSubjects(populations)
     }
 }
 

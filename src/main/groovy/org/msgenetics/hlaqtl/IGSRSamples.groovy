@@ -7,6 +7,7 @@
 package org.msgenetics.hlaqtl
 
 import tech.tablesaw.api.Table;
+import tech.tablesaw.api.StringColumn
 import tech.tablesaw.io.csv.CsvReadOptions
 
 import org.ngsutils.Utils
@@ -16,6 +17,8 @@ import org.ngsutils.Utils
  * @author victor
  */
 class IGSRSamples {
+    
+    /** Internal data table*/
     Table table = null
 	
     /**
@@ -32,6 +35,15 @@ class IGSRSamples {
         Table table = Table.read().usingOptions(options);
         
         return new IGSRSamples(table: table)
+    }
+    
+    /**
+     * Get subjects codes for the given populations
+     */
+    List<String> getSubjects(populations) {
+        StringColumn column = (StringColumn) table.stringColumn('Population code')
+        Table filtered = table.where(column.isIn(populations))
+        return filtered.stringColumn('Sample name').asList()
     }
 }
 
