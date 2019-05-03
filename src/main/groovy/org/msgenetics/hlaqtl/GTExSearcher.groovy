@@ -11,6 +11,8 @@ import tech.tablesaw.api.Table
 import org.ngsutils.Utils
 import org.ngsutils.variation.SNPData
 import tech.tablesaw.api.StringColumn
+import tech.tablesaw.api.IntColumn
+import tech.tablesaw.api.DoubleColumn
 
 import org.msgenetics.hlaqtl.eqtl.LDCalculator
 import org.msgenetics.hlaqtl.eqtl.SNPManager
@@ -129,27 +131,34 @@ class GTExSearcher {
         regionLDCalc(chrRegions, snpsData)
         
         // Final result
+        Table finalTable = Table.create("GTEx_eqtl_filter_LD")
+
         chrRegions.each { chr, regions ->
             regions.each { region->
                 // get snpIds with rSq > threshold
                 def ldResultsPass = region['ld_results'].findAll({ snpId, rSq -> rSq > ldThr})
                 
                 // create the final result table for the region: eqtl table + extra columns:
-                // extra columns: region_snp, region_snp_position, ld_rsq
+                // extra columns: region_snp, region_snp_pos, ld_rsq
                 Table eqtls = region.eqtls
                 StringColumn regionSnps = (StringColumn) eqtls.stringColumn('rs_id_dbSNP147_GRCh37p13')
                 Table result = eqtls.filter(regionSnps.isIn(ldResultsPass.keySet()))
                 
                 StringColumn resultSnps = (StringColumn) result.stringColumn('rs_id_dbSNP147_GRCh37p13')
                 // create extra columns
-                // TODO
+                def snpCol = StringColumn.create('region_snp', (0..result.rowCount()-1).collect{region.snp.id})
+                def snpPosCol = IntColumn.create('region_snp_pos', (0..result.rowCount()-1).collect{region.snp.position})
+                def ldRsqCol = DoubleColumn.create('ld_rsq', resultSnps.asList().collect{region['ld_results'][it]})
                 
                 // add the columns to the result table
-                // TODO
+                result.addColumns(snpCol, snpPosCol, ldRsqCol)
                 
-                // TODO write/append final table to csv file in disk
+                // append to final table
+                finalTable.append(result)
             }
         }
+        
+        finalTable.write().csv(new File(workDir, "${finalTable.name()}_${new Date().format('yyyyMMddHHmmss')}.csv"))
     }
     
     /**
