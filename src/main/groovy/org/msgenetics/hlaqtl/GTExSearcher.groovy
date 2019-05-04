@@ -60,6 +60,8 @@ class GTExSearcher {
     /** Number of threads to use in LD calculation */
     int nThreads = 4
     
+    /** Allowed chromosomes */
+    Set<String> chrAllowed = null;
     
     /**
      *
@@ -68,6 +70,11 @@ class GTExSearcher {
         // Load snp info from ensembl rest api
         EnsemblRestClient client = new EnsemblRestClient(ENSEMBL_REST_API, 15, 200)
         List<SNPData> snpQuery = client.getSnps(queryIds, 'human')
+        
+        // apply allowed chromosomes restriction
+        if (chrAllowed != null) {
+            snpQuery = snpQuery.findAll{it.chr in chrAllowed}
+        }
         
         // Load best eqtls from GTEx data
         Table bestEqtls = GTExEqtl.getBestEqtlsAllTissues(gtexDir, eqtlThr);
@@ -96,24 +103,27 @@ class GTExSearcher {
             }
         }
         
-        // Obtain tped files from 1000genomes vcfs
-        chrRegions.each { chr, regions ->
-            // TODO use the complete chromosome
-            int start = regions.min{ it.start }.start
-            int end = regions.max{ it.end }.end
-            def locusStr = "${chr}:${start}-${end}"
-            def vcfFile = new File(genomesDir , SNPManager.S3_VCF_FILE.replace('{chr}', "chr${chr}")).absolutePath
-            def chrDir = buildChrDir(chr) + '/'
-            // generate tped files in a separate directory for each chromosome
-            SNPManager.loadSNPData(subjects, chrDir, vcfFile, [], locusStr, true, null)
+        if(useCache == false) {
+            // TODO implement check for cache use
+            // Obtain tped files from 1000genomes vcfs
+            chrRegions.each { chr, regions ->
+                // TODO use the complete chromosome
+                int start = regions.min{ it.start }.start
+                int end = regions.max{ it.end }.end
+                def locusStr = "${chr}:${start}-${end}"
+                def vcfFile = new File(genomesDir , SNPManager.S3_VCF_FILE.replace('{chr}', "chr${chr}")).absolutePath
+                def chrDir = buildChrDir(chr) + '/'
+                // generate tped files in a separate directory for each chromosome
+                SNPManager.loadSNPData(subjects, chrDir, vcfFile, [], locusStr, true, null)
+            }
         }
         
         //  Load SNPData from tped files for all snps: query + eqtl
         def snpsData = [:] as TreeMap
         
         chrRegions.each { chr, regions ->
-            tpedFile = new File(buildChrDir(chr), "${SNPManager._1000G_PED}.tped").absolutePath
-            snps = [] as TreeSet
+            def tpedFile = new File(buildChrDir(chr), "${SNPManager._1000G_PED}.tped").absolutePath
+            def snps = [] as TreeSet
             
             regions.each { region->
                 // add the snp that leads the region and all the snps in associated eqtls
@@ -180,7 +190,7 @@ class GTExSearcher {
                     region['region_snps'].each { snpId ->
                         if( current != snpId ) {
                             def data2 = snpsData[snpId]
-                            Double rSq = calcLD(data1, data2)
+                            Double rSq = LDCalculator.calcLD(data1, data2)
                             if( rSq!=null ) {
                                 region['ld_results'][snpId] = rSq
                             }
@@ -191,7 +201,15 @@ class GTExSearcher {
         }// end lDThreadCalc closure
         
         // run lDThreadCalc in threads
-        def closures = (1..nThreads).collect{ (Closure) {lDThreadCalc(it - 1, nThreads)} }
+        nThreads = 4
+        
+        def closures = [
+            {lDThreadCalc(0, nThreads)},
+            {lDThreadCalc(1, nThreads)},
+            {lDThreadCalc(2, nThreads)},
+            {lDThreadCalc(3, nThreads)}
+        ]
+        
         Utils.runClosures(closures, nThreads )
     }
     
@@ -203,7 +221,7 @@ class GTExSearcher {
     }
     
     /**
-     *
+     * Load query snp ids from text file
      */
     def loadQuerySnpsFromFile(file) {
         def reader = new File(file).newReader()
@@ -223,9 +241,21 @@ class GTExSearcher {
         if( !chr.startsWith('chr') ){
             chr = 'chr' + chr
         }
-        String chrPath = new File(workDir, chr).absolutePath
-        Utils.createDir(chrPath)
+        def chrDir = new File(workDir, chr)
+        String chrPath = chrDir.absolutePath
+        
+        if (!chrDir.exists()) {
+            Utils.createDir(chrPath)
+        }
+        
         return chrPath
+    }
+    
+    /**
+     * Set allowed chromosomes to use in calculations
+     */
+    def setChrAllowed(chrs) {
+        chrAllowed = chrs as Set
     }
 }
 
