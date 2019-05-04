@@ -81,8 +81,8 @@ public class EnsemblRestClient {
     private SNPData parseJSONObjectSNP(JSONObject snpObj) {
         SNPData snp = new SNPData();
         snp.setId(snpObj.getString("name"));
-        snp.setMaf(snpObj.getDouble("MAF"));
-        snp.setMinor(snpObj.getString("minor_allele"));
+        snp.setMaf(snpObj.isNull("MAF") ? null : snpObj.getDouble("MAF"));
+        snp.setMinor(snpObj.isNull("minor_allele") ? null : snpObj.getString("minor_allele"));
         
         JSONObject mapping = snpObj.getJSONArray("mappings").getJSONObject(0);
         

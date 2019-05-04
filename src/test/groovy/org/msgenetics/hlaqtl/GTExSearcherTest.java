@@ -21,16 +21,17 @@ public class GTExSearcherTest {
     static String workDir;
     static String gtexDir;
     static String genomesDir;
+    static String snpsFile;
     
     public GTExSearcherTest() {
     }
     
     @BeforeClass
     public static void setUpClass() {
-        // TODO
-        GTExSearcherTest.workDir = "";
-        GTExSearcherTest.gtexDir = "";
-        GTExSearcherTest.genomesDir = "";
+        GTExSearcherTest.workDir = "/home/victor/Escritorio/gtex_eqtl_workdir";
+        GTExSearcherTest.gtexDir = "/home/victor/Descargas/GTEx_Analysis_v7_eQTL";
+        GTExSearcherTest.genomesDir = "/home/victor/1000genomes";
+        GTExSearcherTest.snpsFile = "/home/victor/Escritorio/gtex_eqtl_workdir/MS.txt";
     }
     
     @AfterClass
@@ -49,14 +50,16 @@ public class GTExSearcherTest {
     @Test
     public void perform() {
         String [] populations = {"CEU"};
-        ArrayList<String> snpIds = new ArrayList<String>();
         
         GTExSearcher instance = new GTExSearcher();
         instance.setSubjects(populations);
         instance.setWorkDir(workDir);
         instance.setGenomesDir(genomesDir);
         instance.setGtexDir(gtexDir);
-        instance.setQueryIds(snpIds);
+        instance.loadQuerySnpsFromFile(snpsFile);
+        
+        assertTrue(instance.getQueryIds().size() > 100);
+        assertTrue(instance.getSubjects().size() > 100);
         
         instance.perform();
         

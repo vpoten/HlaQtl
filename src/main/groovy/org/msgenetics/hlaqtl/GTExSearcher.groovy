@@ -85,12 +85,13 @@ class GTExSearcher {
         
         // sort chr regions by start position
         for(String chr : chrRegions.keySet()) {
-            Collections.sort(schrRegions[chr], [compare: {a, b -> a.start <=> b.start}] as Comparator)
+            Collections.sort(chrRegions[chr], [compare: {a, b -> a.start <=> b.start}] as Comparator)
         }
         
         // Associate eqtls with regions
         chrRegions.each { chr, regions ->
             regions.each { region ->
+                // TODO <----- solve error here
                 Table result = GTExEqtl.filterByRegion(bestEqtls, chr, region.start, region.end)
                 regions['eqtls'] = result
             }
@@ -200,6 +201,20 @@ class GTExSearcher {
      */
     def setSubjects(populations) {
         subjects = IGSRSamples.create().getSubjects(populations)
+    }
+    
+    /**
+     *
+     */
+    def loadQuerySnpsFromFile(file) {
+        def reader = new File(file).newReader()
+        queryIds.clear()
+        
+        reader.eachLine { line ->
+            queryIds << line.trim()
+        }
+        
+        reader.close()
     }
 }
 
