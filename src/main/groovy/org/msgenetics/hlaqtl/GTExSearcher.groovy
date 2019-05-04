@@ -91,29 +91,28 @@ class GTExSearcher {
         // Associate eqtls with regions
         chrRegions.each { chr, regions ->
             regions.each { region ->
-                // TODO <----- solve error here
                 Table result = GTExEqtl.filterByRegion(bestEqtls, chr, region.start, region.end)
-                regions['eqtls'] = result
+                region['eqtls'] = result
             }
         }
         
         // Obtain tped files from 1000genomes vcfs
         chrRegions.each { chr, regions ->
             // TODO use the complete chromosome
-            int start = regions.min{ it.start }
-            int end = regions.max{ it.end }
+            int start = regions.min{ it.start }.start
+            int end = regions.max{ it.end }.end
             def locusStr = "${chr}:${start}-${end}"
-            def vcfFile = SNPManager.S3_VCF_FILE.replace('{chr}', chr)
-            def groups = []
-            SNPManager.loadSNPData(subjects, workDir, vcfFile, groups, locusStr, true, null)
-            // TODO check if the generated .tped file should be renamed
+            def vcfFile = new File(genomesDir , SNPManager.S3_VCF_FILE.replace('{chr}', "chr${chr}")).absolutePath
+            def chrDir = buildChrDir(chr) + '/'
+            // generate tped files in a separate directory for each chromosome
+            SNPManager.loadSNPData(subjects, chrDir, vcfFile, [], locusStr, true, null)
         }
         
         //  Load SNPData from tped files for all snps: query + eqtl
         def snpsData = [:] as TreeMap
         
         chrRegions.each { chr, regions ->
-            tpedFile = "${SNPManager._1000G_PED}.tped"
+            tpedFile = new File(buildChrDir(chr), "${SNPManager._1000G_PED}.tped").absolutePath
             snps = [] as TreeSet
             
             regions.each { region->
@@ -215,6 +214,18 @@ class GTExSearcher {
         }
         
         reader.close()
+    }
+    
+    /**
+     * Build a directory for a chromosome within workDir and returns the created path
+     */
+    def buildChrDir(String chr) {
+        if( !chr.startsWith('chr') ){
+            chr = 'chr' + chr
+        }
+        String chrPath = new File(workDir, chr).absolutePath
+        Utils.createDir(chrPath)
+        return chrPath
     }
 }
 

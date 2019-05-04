@@ -96,7 +96,7 @@ class SNPManager {
     static final String _1000G_FTP = 'ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/'
     static final String S3_VCF_FILE = 'ALL.{chr}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz'
     static final String S3_VCF_TBI = 'ALL.{chr}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz.tbi'
-    static final String S3_VCF_URL = 's3://1000genomes/release/20110521/'  // TODO update s3 url
+    static final String S3_VCF_URL = 's3://1000genomes/release/20130502/'
     static def regexVcf = /ALL\.(\w+)\.phase3_shapeit2_mvncall_integrated_v5a\.20130502\.genotypes\.vcf\.gz/
     
     def hmSnps = [:] as TreeMap //map of selected SNPs {snp_id, SNPData} (HapMap)
@@ -136,7 +136,7 @@ class SNPManager {
         
         // download 1000 genomes data
         def tbiFile = null
-        def tmpDir = outdir+'tmp/'
+        def tmpDir = new File(outdir, 'tmp').absolutePath
         Utils.createDir(tmpDir)
         
         if( !vcfFile ){
