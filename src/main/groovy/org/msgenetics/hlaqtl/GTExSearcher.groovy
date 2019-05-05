@@ -13,6 +13,7 @@ import org.ngsutils.variation.SNPData
 import tech.tablesaw.api.StringColumn
 import tech.tablesaw.api.IntColumn
 import tech.tablesaw.api.DoubleColumn
+import tech.tablesaw.io.csv.CsvWriteOptions
 
 import org.msgenetics.hlaqtl.eqtl.LDCalculator
 import org.msgenetics.hlaqtl.eqtl.SNPManager
@@ -67,6 +68,8 @@ class GTExSearcher {
      *
      */
     def perform() {
+        println "Start time: ${new Date()}\n"
+        
         // Load snp info from ensembl rest api
         EnsemblRestClient client = new EnsemblRestClient(ENSEMBL_REST_API, 15, 200)
         List<SNPData> snpQuery = client.getSnps(queryIds, 'human')
@@ -103,19 +106,9 @@ class GTExSearcher {
             }
         }
         
-        if(useCache == false) {
-            // TODO implement check for cache use
+        if(useCache == false || !checkExistsTped(chrRegions)) {
             // Obtain tped files from 1000genomes vcfs
-            chrRegions.each { chr, regions ->
-                // TODO use the complete chromosome
-                int start = regions.min{ it.start }.start
-                int end = regions.max{ it.end }.end
-                def locusStr = "${chr}:${start}-${end}"
-                def vcfFile = new File(genomesDir , SNPManager.S3_VCF_FILE.replace('{chr}', "chr${chr}")).absolutePath
-                def chrDir = buildChrDir(chr) + '/'
-                // generate tped files in a separate directory for each chromosome
-                SNPManager.loadSNPData(subjects, chrDir, vcfFile, [], locusStr, true, null)
-            }
+            extractTpedFromVcfs(chrRegions)
         }
         
         //  Load SNPData from tped files for all snps: query + eqtl
@@ -129,22 +122,30 @@ class GTExSearcher {
                 // add the snp that leads the region and all the snps in associated eqtls
                 snps << region.snp.id
                 Table eqtls = region.eqtls
-                StringColumn  regionSnps = (StringColumn) eqtls.stringColumn('rs_id_dbSNP147_GRCh37p13').asSet().findAll{ it!=null }
+                def regionSnps = ((StringColumn) eqtls.stringColumn('rs_id_dbSNP147_GRCh37p13')).
+                    asSet().
+                    findAll{ it!=null && it.startsWith('rs') }
                 region['region_snps'] = regionSnps
                 snps += regionSnps
             }
             
+            println "Load genotypes from tped file chr${chr}: ${new Date()}"
             SNPData.createFromTped(tpedFile, snps, snpsData)
         }
         
         // LD calculation between query snps and eqtl snps in region
+        println "\nCalculating LD in ${nThreads} threads: ${new Date()}\n"
         regionLDCalc(chrRegions, snpsData)
         
         // Final result
         Table finalTable = Table.create("GTEx_eqtl_filter_LD")
 
         chrRegions.each { chr, regions ->
-            regions.each { region->
+            regions.each { region->      
+                if (!('ld_results' in region)) {
+                    region['ld_results'] = [:]
+                }
+                
                 // get snpIds with rSq > threshold
                 def ldResultsPass = region['ld_results'].findAll({ snpId, rSq -> rSq > ldThr})
                 
@@ -152,23 +153,32 @@ class GTExSearcher {
                 // extra columns: region_snp, region_snp_pos, ld_rsq
                 Table eqtls = region.eqtls
                 StringColumn regionSnps = (StringColumn) eqtls.stringColumn('rs_id_dbSNP147_GRCh37p13')
-                Table result = eqtls.filter(regionSnps.isIn(ldResultsPass.keySet()))
+                Table result = eqtls.where(regionSnps.isIn(ldResultsPass.keySet()))
                 
-                StringColumn resultSnps = (StringColumn) result.stringColumn('rs_id_dbSNP147_GRCh37p13')
-                // create extra columns
-                def snpCol = StringColumn.create('region_snp', (0..result.rowCount()-1).collect{region.snp.id})
-                def snpPosCol = IntColumn.create('region_snp_pos', (0..result.rowCount()-1).collect{region.snp.position})
-                def ldRsqCol = DoubleColumn.create('ld_rsq', resultSnps.asList().collect{region['ld_results'][it]})
-                
-                // add the columns to the result table
-                result.addColumns(snpCol, snpPosCol, ldRsqCol)
-                
-                // append to final table
-                finalTable.append(result)
+                if (result.rowCount() > 0) {
+                    StringColumn resultSnps = (StringColumn) result.stringColumn('rs_id_dbSNP147_GRCh37p13')
+                    // create extra columns
+                    def snpCol = StringColumn.create('region_snp', (0..result.rowCount()-1).collect{region.snp.id})
+                    def snpPosCol = IntColumn.create('region_snp_pos', (0..result.rowCount()-1).collect{region.snp.position})
+                    def ldRsqCol = DoubleColumn.create('ld_rsq', resultSnps.asList().collect{region['ld_results'][it]})
+
+                    // add the columns to the result table
+                    result.addColumns(snpCol, snpPosCol, ldRsqCol)
+
+                    // append to final table
+                    finalTable.append(result)
+                }
             }
         }
         
-        finalTable.write().csv(new File(workDir, "${finalTable.name()}_${new Date().format('yyyyMMddHHmmss')}.csv"))
+        if (finalTable.rowCount() > 0) {
+            writeResultTable(finalTable)
+        }
+        else {
+            println "Empty result: No table will be written to disk.\n"
+        }
+        
+        println "End time: ${new Date()}\n"
     }
     
     /**
@@ -184,17 +194,27 @@ class GTExSearcher {
             allRegions.eachWithIndex{ region, i-> 
                 if ((i % totalThrs) == thread) {
                     region['ld_results'] = [:] as TreeMap
-                    def data1 = region.snp
                     def current = region.snp.id
+                    def data1 = snpsData[current]
 
-                    region['region_snps'].each { snpId ->
-                        if( current != snpId ) {
-                            def data2 = snpsData[snpId]
-                            Double rSq = LDCalculator.calcLD(data1, data2)
-                            if( rSq!=null ) {
-                                region['ld_results'][snpId] = rSq
+                    if (data1 != null) {
+                        region['region_snps'].each { snpId ->
+                            if( current != snpId ) {
+                                def data2 = snpsData[snpId]
+                                if (data2 != null) {
+                                    Double rSq = LDCalculator.calcLD(data1, data2)
+                                    if( rSq!=null ) {
+                                        region['ld_results'][snpId] = rSq
+                                    }
+                                }
+                                else {
+                                    System.err.println("SNP ${snpId} in region lead by ${current} (${region.snp.locus}) has no data")
+                                }
                             }
                         }
+                    }
+                    else {
+                        System.err.println("Region SNP ${current} (${region.snp.locus}) has no data")
                     }
                 }
             }
@@ -256,6 +276,60 @@ class GTExSearcher {
      */
     def setChrAllowed(chrs) {
         chrAllowed = chrs as Set
+    }
+    
+    /**
+     * Write csv result table to disk
+     */
+    private void writeResultTable(Table result) {
+        def builder = CsvWriteOptions.builder(new File(workDir, "${result.name()}_${new Date().format('yyyyMMddHHmmss')}.csv")).
+            header(true).
+            separator((char)'\t')
+        
+        CsvWriteOptions options = builder.build()
+        result.write().csv(options)
+    }
+    
+    /**
+     * Checks that tped files exists in working directory
+     */
+    private boolean checkExistsTped(chrRegions) {
+        return chrRegions.keySet().collect{new File(buildChrDir(it), "${SNPManager._1000G_PED}.tped")}.every{it.exists()}
+    }
+    
+    /**
+     * Extract tped from vcfs in threads
+     */
+    private void extractTpedFromVcfs(chrRegions) {
+        
+        // closure for tped extraction
+        def tpedFromVcfThreadCalc = { thread, totalThrs ->
+            chrRegions.keySet().eachWithIndex { chr, i ->
+                if ((i % totalThrs) == thread) {
+                    def regions = chrRegions[chr]
+                    int start = regions.min{ it.start }.start
+                    int end = regions.max{ it.end }.end
+                    def locusStr = "${chr}:${start}-${end}"
+                    def vcfFile = new File(genomesDir , SNPManager.S3_VCF_FILE.replace('{chr}', "chr${chr}")).absolutePath
+                    def chrDir = buildChrDir(chr) + '/'
+                    // generate tped files in a separate directory for each chromosome
+                    println "Load snp data from vcf file chr${chr}: ${new Date()}"
+                    SNPManager.loadSNPData(subjects, chrDir, vcfFile, [], locusStr, true, null)
+                }
+            }
+        }
+        
+        // run lDThreadCalc in threads
+        nThreads = 4
+        
+        def closures = [
+            {tpedFromVcfThreadCalc(0, nThreads)},
+            {tpedFromVcfThreadCalc(1, nThreads)},
+            {tpedFromVcfThreadCalc(2, nThreads)},
+            {tpedFromVcfThreadCalc(3, nThreads)}
+        ]
+        
+        Utils.runClosures(closures, nThreads )
     }
 }
 
