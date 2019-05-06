@@ -159,7 +159,7 @@ class GTExSearcher {
                     StringColumn resultSnps = (StringColumn) result.stringColumn('rs_id_dbSNP147_GRCh37p13')
                     // create extra columns
                     def snpCol = StringColumn.create('region_snp', (0..result.rowCount()-1).collect{region.snp.id})
-                    def snpPosCol = IntColumn.create('region_snp_pos', (0..result.rowCount()-1).collect{region.snp.position})
+                    def snpPosCol = IntColumn.create('region_snp_pos', (0..result.rowCount()-1).collect{region.snp.position} as int [])
                     def ldRsqCol = DoubleColumn.create('ld_rsq', resultSnps.asList().collect{region['ld_results'][it]})
 
                     // add the columns to the result table
@@ -319,17 +319,13 @@ class GTExSearcher {
             }
         }
         
-        // run lDThreadCalc in threads
-        nThreads = 4
-        
+        // run tpedFromVcfThreadCalc in threads
         def closures = [
-            {tpedFromVcfThreadCalc(0, nThreads)},
-            {tpedFromVcfThreadCalc(1, nThreads)},
-            {tpedFromVcfThreadCalc(2, nThreads)},
-            {tpedFromVcfThreadCalc(3, nThreads)}
+            {tpedFromVcfThreadCalc(0, 2)},
+            {tpedFromVcfThreadCalc(1, 2)}
         ]
         
-        Utils.runClosures(closures, nThreads )
+        Utils.runClosures(closures, 2)
     }
 }
 
