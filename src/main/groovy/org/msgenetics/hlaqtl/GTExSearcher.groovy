@@ -138,7 +138,8 @@ class GTExSearcher {
         regionLDCalc(chrRegions, snpsData)
         
         // Final result
-        Table finalTable = Table.create("GTEx_eqtl_filter_LD")
+        Table finalTableFiltered = Table.create("GTEx_eqtl_search_filter_LD")
+        Table finalTableAll = Table.create("GTEx_eqtl_search_all_LD")
 
         chrRegions.each { chr, regions ->
             regions.each { region->      
@@ -151,34 +152,53 @@ class GTExSearcher {
                 
                 // create the final result table for the region: eqtl table + extra columns:
                 // extra columns: region_snp, region_snp_pos, ld_rsq
-                Table eqtls = region.eqtls
-                StringColumn regionSnps = (StringColumn) eqtls.stringColumn('rs_id_dbSNP147_GRCh37p13')
-                Table result = eqtls.where(regionSnps.isIn(ldResultsPass.keySet()))
                 
-                if (result.rowCount() > 0) {
-                    StringColumn resultSnps = (StringColumn) result.stringColumn('rs_id_dbSNP147_GRCh37p13')
-                    // create extra columns
-                    def snpCol = StringColumn.create('region_snp', (0..result.rowCount()-1).collect{region.snp.id})
-                    def snpPosCol = IntColumn.create('region_snp_pos', (0..result.rowCount()-1).collect{region.snp.position} as int [])
-                    def ldRsqCol = DoubleColumn.create('ld_rsq', resultSnps.asList().collect{region['ld_results'][it]})
-
-                    // add the columns to the result table
-                    result.addColumns(snpCol, snpPosCol, ldRsqCol)
-
-                    // append to final table
-                    finalTable.append(result)
-                }
+                StringColumn regionSnps = (StringColumn) region.eqtls.stringColumn('rs_id_dbSNP147_GRCh37p13')
+                Table eqtlsSubset = region.eqtls.where(regionSnps.isIn(ldResultsPass.keySet()))
+                
+                finalTableFiltered = appendToResultTable(region, eqtlsSubset, finalTableFiltered)
+                finalTableAll = appendToResultTable(region, region.eqtls.copy(), finalTableAll)
             }
         }
         
-        if (finalTable.rowCount() > 0) {
-            writeResultTable(finalTable)
-        }
-        else {
-            println "Empty result: No table will be written to disk.\n"
+        [finalTableAll, finalTableFiltered].each { it ->
+            if (it.rowCount() > 0) {
+                writeResultTable(it)
+            }
+            else {
+                println "Empty result: No table ${it.name()} will be written to disk.\n"
+            }
         }
         
         println "End time: ${new Date()}\n"
+    }
+    
+    /**
+     * 
+     */ 
+    private Table appendToResultTable(region, Table eqtlsSubset, Table destination) {
+        if (eqtlsSubset.rowCount() == 0) {
+            return destination
+        }
+        
+        StringColumn resultSnps = (StringColumn) eqtlsSubset.stringColumn('rs_id_dbSNP147_GRCh37p13')
+        // create extra columns
+        def snpCol = StringColumn.create('region_snp', (0..eqtlsSubset.rowCount()-1).collect{region.snp.id})
+        def snpPosCol = IntColumn.create('region_snp_pos', (0..eqtlsSubset.rowCount()-1).collect{region.snp.position} as int [])
+        def ldRsqCol = DoubleColumn.create('ld_rsq', resultSnps.asList().collect{region['ld_results'][it] ?: -1})
+
+        // add the columns to the result table
+        eqtlsSubset = eqtlsSubset.addColumns(snpCol, snpPosCol, ldRsqCol)
+
+        // append to final table
+        if (destination.columnCount() == 0) {
+            destination = destination.addColumns(eqtlsSubset.columnArray())
+        }
+        else {
+            destination = destination.append(eqtlsSubset)
+        }
+        
+        return destination
     }
     
     /**
