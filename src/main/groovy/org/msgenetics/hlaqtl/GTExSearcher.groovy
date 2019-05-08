@@ -83,7 +83,7 @@ class GTExSearcher {
         Table bestEqtls = GTExEqtl.getBestEqtlsAllTissues(gtexDir, eqtlThr);
         
         // Build regions around snps in query list
-        def chrRegions = [:]
+        def chrRegions = [:] as TreeMap
         
         snpQuery.each { snp ->
                 if ( !(snp.chrNum in chrRegions) ) {
@@ -132,6 +132,9 @@ class GTExSearcher {
             println "Load genotypes from tped file chr${chr}: ${new Date()}"
             SNPData.createFromTped(tpedFile, snps, snpsData)
         }
+        
+        // write regions report
+        reportRegionsStats(chrRegions, snpsData)
         
         // LD calculation between query snps and eqtl snps in region
         println "\nCalculating LD in ${nThreads} threads: ${new Date()}\n"
@@ -346,6 +349,27 @@ class GTExSearcher {
         ]
         
         Utils.runClosures(closures, 2)
+    }
+    
+    /**
+     * Writes a report with region info to disk
+     */
+    private void reportRegionsStats(chrRegions, snpsData) {
+        def writer = new File(workDir, 'regions_summary.tsv').newPrintWriter()
+        writer.println('chr\tposition\tsnp\treg_start\treg_end\tnum_eqtl\tnum_snps\tmissing_genotypes\trate_missing')
+        
+        chrRegions.each { chr, regions ->
+            regions.each { region->
+                region['missing_snps'] = region['region_snps'].findAll{!(it in snpsData)}
+               
+                writer.print("${chr}\t${region.snp.position}\t${region.snp.id}\t")
+                writer.print("${region.start}\t${region.end}\t")
+                writer.print("${region.eqtls.rowCount()}\t${region['region_snps'].size()}\t${region['missing_snps'].size()}\t")
+                writer.println("${region['missing_snps'].size()/(double)region['region_snps'].size()}")
+            }
+        }
+        
+        writer.close()
     }
 }
 
