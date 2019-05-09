@@ -333,7 +333,8 @@ class GTExSearcher {
                     int start = regions.min{ it.start }.start
                     int end = regions.max{ it.end }.end
                     def locusStr = "${chr}:${start}-${end}"
-                    def vcfFile = new File(genomesDir , SNPManager.S3_VCF_FILE.replace('{chr}', "chr${chr}")).absolutePath
+                    def vcfTpl = (chr == 'X') ? SNPManager.S3_VCF_FILE_X : SNPManager.S3_VCF_FILE
+                    def vcfFile = new File(genomesDir , vcfTpl.replace('{chr}', "chr${chr}")).absolutePath
                     def chrDir = buildChrDir(chr) + '/'
                     // generate tped files in a separate directory for each chromosome
                     println "Load snp data from vcf file chr${chr}: ${new Date()}"
