@@ -83,43 +83,43 @@ public class MainTest {
     }
     
     
-    @Test
-    public void launchMasterQueue()
-    {
-        System.out.println("TestLaunchMasterQueue");
-        
-        Main.setSqsMaster( QueueUtils.launchMasterQueue(Main.getProperties()) );
-        
-        assertNotNull( Main.getSqsMaster() );
-    }
+//    @Test
+//    public void launchMasterQueue()
+//    {
+//        System.out.println("TestLaunchMasterQueue");
+//        
+//        Main.setSqsMaster( QueueUtils.launchMasterQueue(Main.getProperties()) );
+//        
+//        assertNotNull( Main.getSqsMaster() );
+//    }
     
-    @Test
-    public void launchSlaveQueue()
-    {
-        System.out.println("TestLaunchSlaveQueue");
-        
-        Main.setSqsSlave( QueueUtils.launchSlaveQueue(Main.getProperties()) );
-        
-        assertNotNull( Main.getSqsSlave() );
-    }
+//    @Test
+//    public void launchSlaveQueue()
+//    {
+//        System.out.println("TestLaunchSlaveQueue");
+//        
+//        Main.setSqsSlave( QueueUtils.launchSlaveQueue(Main.getProperties()) );
+//        
+//        assertNotNull( Main.getSqsSlave() );
+//    }
     
-    @Test
-    public void launchAuditQueues()
-    {
-        System.out.println("TestLaunchAuditQueues");
-        
-        Main.setSqsReceiver( QueueUtils.launchReceiverQueue(Main.getProperties()) );
-        Main.setSqsSender( QueueUtils.launchSenderQueue(Main.getProperties(), 1000*5) );
-        
-        try {
-            Thread.sleep(1000*20);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(MainTest.class.getName()).log(Level.SEVERE, null, ex);
-        }
-      
-        assertNotNull( Main.getSqsSender() );
-        assertTrue( Main.getSqsReceiver().getCount()>1 );
-    }
+//    @Test
+//    public void launchAuditQueues()
+//    {
+//        System.out.println("TestLaunchAuditQueues");
+//        
+//        Main.setSqsReceiver( QueueUtils.launchReceiverQueue(Main.getProperties()) );
+//        Main.setSqsSender( QueueUtils.launchSenderQueue(Main.getProperties(), 1000*5) );
+//        
+//        try {
+//            Thread.sleep(1000*20);
+//        } catch (InterruptedException ex) {
+//            Logger.getLogger(MainTest.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//      
+//        assertNotNull( Main.getSqsSender() );
+//        assertTrue( Main.getSqsReceiver().getCount()>1 );
+//    }
     
     @Test
     public void getOptSubjects()

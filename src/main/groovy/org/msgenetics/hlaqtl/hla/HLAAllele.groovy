@@ -246,8 +246,7 @@ class HLAAllele {
  
         SimpleGapPenalty gapP = new SimpleGapPenalty(5 as Short, 2 as Short);
 
-        PairwiseSequenceAligner<Sequence, NucleotideCompound> psa =
-                        Alignments.getPairwiseAligner((useGeneSeq ? this.geneSeq : this.completeCDS), 
+        def psa = Alignments.getPairwiseAligner((useGeneSeq ? this.geneSeq : this.completeCDS), 
                             target, (isLocal ? PairwiseSequenceAlignerType.LOCAL : PairwiseSequenceAlignerType.GLOBAL), 
                             gapP, matrix);
                                     

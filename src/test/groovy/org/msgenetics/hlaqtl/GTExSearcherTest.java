@@ -45,28 +45,27 @@ public class GTExSearcherTest {
     @After
     public void tearDown() {
     }
-
     
-    @Test
-    public void perform() {
-        String [] populations = {"CEU"};
-        // String [] chrs = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
-        // String [] chrs = {"X"};
-        
-        GTExSearcher instance = new GTExSearcher();
-        instance.setSubjects(populations);
-        instance.setWorkDir(workDir);
-        instance.setGenomesDir(genomesDir);
-        instance.setGtexDir(gtexDir);
-        // instance.setChrAllowed(chrs);
-        instance.loadQuerySnpsFromFile(snpsFile);
-        instance.setUseCache(false);
-        
-        assertTrue(instance.getQueryIds().size() > 100);
-        assertTrue(instance.getSubjects().size() > 100);
-        
-        instance.perform();
-        
-        // TODO
-    }
+//    @Test
+//    public void perform() {
+//        String [] populations = {"CEU"};
+//        // String [] chrs = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
+//        // String [] chrs = {"X"};
+//        
+//        GTExSearcher instance = new GTExSearcher();
+//        instance.setSubjects(populations);
+//        instance.setWorkDir(workDir);
+//        instance.setGenomesDir(genomesDir);
+//        instance.setGtexDir(gtexDir);
+//        // instance.setChrAllowed(chrs);
+//        instance.loadQuerySnpsFromFile(snpsFile);
+//        instance.setUseCache(false);
+//        
+//        assertTrue(instance.getQueryIds().size() > 100);
+//        assertTrue(instance.getSubjects().size() > 100);
+//        
+//        instance.perform();
+//        
+//        // TODO
+//    }
 }
