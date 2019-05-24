@@ -14,6 +14,9 @@ import tech.tablesaw.api.StringColumn
 import tech.tablesaw.api.IntColumn
 import tech.tablesaw.api.DoubleColumn
 import tech.tablesaw.io.csv.CsvWriteOptions
+import groovy.cli.picocli.CliBuilder
+import groovy.cli.Option
+import groovy.cli.Unparsed
 
 import org.msgenetics.hlaqtl.eqtl.LDCalculator
 import org.msgenetics.hlaqtl.eqtl.SNPManager
@@ -28,32 +31,46 @@ class GTExSearcher {
     
     static final String ENSEMBL_REST_API = 'http://grch37.rest.ensembl.org'
     
+    /** GTEx eqtl data */
+    //@Option(description='file containing the rs ids of the query SNPs', numberOfArguments=1)
+    String snpsFile = null
+    
     /** list of query snps (rs ids) */
     List<String> queryIds = []
     
     /** Size of region around query SNPs */
+    //@Option(description='SNP region size', numberOfArguments=1, defaultValue='10000000')
     int snpRegionSize = 10000000
     
     /** GTEx eqtl data */
+    //@Option(description='directory where eQTL GTEx result resides', numberOfArguments=1)
     String gtexDir = null
     
     /** Working directory */
+    //@Option(description='working directory', numberOfArguments=1)
     String workDir = null
     
     /** 1000 genomes (vcf + tbi) directory */
+    //@Option(description='directory where 1000 genomes vcf file resides', numberOfArguments=1)
     String genomesDir = null
     
     /** GTEx tissues where to filter the eqtls (all by default) */
     List<String> tissues = null
     
     /** eqtl p-value threshold to filter best eqtls */
+    //@Option(description='eQTL p-value threshold', numberOfArguments=1, defaultValue='0.05')
     double eqtlThr = 0.05d
     
     /** LD threshold to filter results */
+    //@Option(description='LD result threshold', numberOfArguments=1, defaultValue='0.5')
     double ldThr = 0.5d
     
     /** Keep cache of tped files */
     boolean useCache = true
+    
+    /** Populations where to get the subjects */
+    //@Option(description='Populations where to get the subjects', numberOfArgumentsString='+', defaultValue='CEU', valueSeparator=',')
+    String [] populations
     
     /** List of subjects to use */
     List<String> subjects
@@ -68,11 +85,23 @@ class GTExSearcher {
      * Main method, parse args and perform the calculation
      */ 
     public static void main(args) {
-        def cli = new CliBuilder(usage: "${Main.COMM_GTEX_SEARCH} [option]")
+        def instance =  createFromArgs(args)
+        // TODO <--------------------------
+    }
+    
+    /**
+     * 
+     */ 
+    static GTExSearcher createFromArgs(args) {
+        def cli = new CliBuilder(usage: "${Main.COMM_GTEX_SEARCH} [options]")
         def instance = new GTExSearcher()                               
         cli.parseFromInstance(instance, args)
         
+        instance.loadQuerySnpsFromFile(instance.snpsFile)
+        instance.setSubjects(instance.populations)
+        
         // TODO <--------------------------
+        return instance
     }
     
     /**

@@ -46,6 +46,14 @@ public class GTExSearcherTest {
     public void tearDown() {
     }
     
+    @Test
+    public void createFromArgs() {
+        String command = "-s snps.txt";
+        String [] args = command.split("\\s");
+        GTExSearcher instance = GTExSearcher.createFromArgs(args);
+        assertNotNull(instance);
+    }
+    
 //    @Test
 //    public void perform() {
 //        String [] populations = {"CEU"};
