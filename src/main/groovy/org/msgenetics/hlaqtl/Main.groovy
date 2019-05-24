@@ -91,6 +91,7 @@ public class Main
     public static final String COMM_EQTL_SIMPLE = 'eqtlSimple'
     public static final String COMM_DIFF_EXPR_PIPE = 'diffExprPipe'
     public static final String COMM_PHLAT = 'phlat'
+    public static final String COMM_GTEX_SEARCH = 'gtexSearch'
     
     public static def COMMANDS = [COMM_QC, COMM_FILTER, COMM_HLAMAP, COMM_CBCBMAP, 
         COMM_EQTL, COMM_ASSOCORR, COMM_DEBUGEQTL, COMM_DOWN_EXPR, COMM_DOWN_JOBDATA,
@@ -98,7 +99,10 @@ public class Main
         COMM_DOWN_SEQS, COMM_SEARCH_CT, COMM_ASSOC_EQTL_SNPS, COMM_GO_ENRICH,
         COMM_GROUP_LD, COMM_SIMUL_ERR, COMM_FEATSNP_ENRICH, COMM_ADDFEAT_SNP,
         COMM_EQTL_TRANS_LD, COMM_CNTRL_GROUP_LD, COMM_GET_GENO, COMM_EQTL_SIMPLE,
-        COMM_DIFF_EXPR_PIPE, COMM_PHLAT]
+        COMM_DIFF_EXPR_PIPE, COMM_PHLAT, COMM_GTEX_SEARCH]
+    
+    /** List of commands that skip the pre-load of properties and subjects */
+    public static def SKIP_STARTS_LOADS = [COMM_GTEX_SEARCH]
     
     //usages
     public static final String USA_QC = "${COMM_QC} ${OPT_PROPS}<ngsengine props file> [${OPT_SUBJECTS}=]"
@@ -221,11 +225,12 @@ public class Main
             System.exit(1)
         }
         
-        loadConfig(args as List)
-        
         println "Start time: ${new Date()}\n"
         
-        loadSubjects(args as List)
+        if(!(args[0] in SKIP_STARTS_LOADS)) {
+            loadConfig(args as List)
+            loadSubjects(args as List)
+        }
         
         if( args[0] == COMM_QC ){
             launchQC(args as List)
@@ -307,6 +312,9 @@ public class Main
         }
         else if( args[0] == COMM_PHLAT ){
             phlatTyping(args as List)
+        }
+        else if( args[0] == COMM_GTEX_SEARCH ){
+            GTExSearcher.main(args)
         }
         
         println "End time: ${new Date()}\n"

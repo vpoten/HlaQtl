@@ -65,6 +65,17 @@ class GTExSearcher {
     Set<String> chrAllowed = null;
     
     /**
+     * Main method, parse args and perform the calculation
+     */ 
+    public static void main(args) {
+        def cli = new CliBuilder(usage: "${Main.COMM_GTEX_SEARCH} [option]")
+        def instance = new GTExSearcher()                               
+        cli.parseFromInstance(instance, args)
+        
+        // TODO <--------------------------
+    }
+    
+    /**
      *
      */
     def perform() {
