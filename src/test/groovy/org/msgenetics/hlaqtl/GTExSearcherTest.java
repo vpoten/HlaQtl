@@ -6,6 +6,7 @@
 package org.msgenetics.hlaqtl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -48,10 +49,33 @@ public class GTExSearcherTest {
     
     @Test
     public void createFromArgs() {
-        String command = "-s snps.txt";
-        String [] args = command.split("\\s");
-        GTExSearcher instance = GTExSearcher.createFromArgs(args);
+        String [] commandParts = {
+            "--snps=" + GTExSearcherTest.snpsFile,
+            "--workDir=" + GTExSearcherTest.workDir,
+            "--gtexDir=" + GTExSearcherTest.gtexDir,
+            "--genomesDir=" + GTExSearcherTest.genomesDir,
+        };
+        
+        for (String c : commandParts)  {
+            // check error with missing parameters
+            String [] args = {c};
+            GTExSearcher instance = GTExSearcher.createFromArgs(args);
+            assertNull(instance);
+        }
+        
+        // check a valid call with defaults
+        GTExSearcher instance = GTExSearcher.createFromArgs(commandParts);
         assertNotNull(instance);
+        assertTrue(instance.getQueryIds().size() > 100);
+        assertTrue(instance.getSubjects().size() > 100);
+        assertEquals(instance.getSnpRegionSize(), 10000000);
+        assertTrue(Math.abs(0.05d - instance.getEqtlThr()) < 1e-12);
+        
+        // check an invalid call
+        String [] args = Arrays.copyOf(commandParts, commandParts.length + 1);
+        args[commandParts.length] = "--regionSize=axx";
+        instance = GTExSearcher.createFromArgs(args);
+        assertNull(instance);
     }
     
 //    @Test

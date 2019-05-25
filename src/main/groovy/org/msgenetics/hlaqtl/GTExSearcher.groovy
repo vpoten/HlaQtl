@@ -31,46 +31,32 @@ class GTExSearcher {
     
     static final String ENSEMBL_REST_API = 'http://grch37.rest.ensembl.org'
     
-    /** GTEx eqtl data */
-    //@Option(description='file containing the rs ids of the query SNPs', numberOfArguments=1)
-    String snpsFile = null
-    
     /** list of query snps (rs ids) */
     List<String> queryIds = []
     
     /** Size of region around query SNPs */
-    //@Option(description='SNP region size', numberOfArguments=1, defaultValue='10000000')
     int snpRegionSize = 10000000
     
     /** GTEx eqtl data */
-    //@Option(description='directory where eQTL GTEx result resides', numberOfArguments=1)
     String gtexDir = null
     
     /** Working directory */
-    //@Option(description='working directory', numberOfArguments=1)
     String workDir = null
     
     /** 1000 genomes (vcf + tbi) directory */
-    //@Option(description='directory where 1000 genomes vcf file resides', numberOfArguments=1)
     String genomesDir = null
     
     /** GTEx tissues where to filter the eqtls (all by default) */
     List<String> tissues = null
     
     /** eqtl p-value threshold to filter best eqtls */
-    //@Option(description='eQTL p-value threshold', numberOfArguments=1, defaultValue='0.05')
     double eqtlThr = 0.05d
     
     /** LD threshold to filter results */
-    //@Option(description='LD result threshold', numberOfArguments=1, defaultValue='0.5')
     double ldThr = 0.5d
     
     /** Keep cache of tped files */
     boolean useCache = true
-    
-    /** Populations where to get the subjects */
-    //@Option(description='Populations where to get the subjects', numberOfArgumentsString='+', defaultValue='CEU', valueSeparator=',')
-    String [] populations
     
     /** List of subjects to use */
     List<String> subjects
@@ -85,22 +71,37 @@ class GTExSearcher {
      * Main method, parse args and perform the calculation
      */ 
     public static void main(args) {
-        def instance =  createFromArgs(args)
+        def instance =  createFromArgs(Arrays.copyOfRange(args, 1, args.length))
         // TODO <--------------------------
     }
     
+    static CliBuilder cliBuilder() {
+        def cli = new CliBuilder(name: Main.COMM_GTEX_SEARCH)
+        cli._(longOpt: 'genomesDir', argName:'path', args: 1, 'directory where 1000 genomes vcf files resides', required: true)
+        cli._(longOpt: 'gtexDir', argName:'path', args: 1, 'directory where eQTL GTEx results resides', required: true)
+        cli._(longOpt: 'snps', argName:'path', args: 1, 'file containing the rs ids of the query SNPs', required: true)
+        cli._(longOpt: 'workDir', argName:'path', args: 1, 'working directory', required: true)
+        cli._(longOpt: 'populations', argName:'code', valueSeparator:',', args: '+', defaultValue: 'CEU', 'populations where to get the subjects')
+        cli._(longOpt: 'eqtlThr', argName:'thr', args: 1, defaultValue: '0.05', 'eQTL p-value threshold', type: Double)
+        cli._(longOpt: 'ldThr', argName:'thr', args: 1, defaultValue: '0.5', 'LD result thresholdd', type: Double)
+        cli._(longOpt: 'regionSize', argName:'len', args: 1, 'SNP region size', defaultValue: '10000000', type: Integer)
+        return cli
+    }
+    
     /**
-     * 
+     * Create instance from commandline args
      */ 
     static GTExSearcher createFromArgs(args) {
-        def cli = new CliBuilder(usage: "${Main.COMM_GTEX_SEARCH} [options]")
-        def instance = new GTExSearcher()                               
-        cli.parseFromInstance(instance, args)
+        def cli = cliBuilder()                  
+        def options = cli.parse(args)
         
-        instance.loadQuerySnpsFromFile(instance.snpsFile)
-        instance.setSubjects(instance.populations)
+        if (options == null) {
+            return null
+        }
         
-        // TODO <--------------------------
+        def instance = new GTExSearcher()             
+        instance.loadQuerySnpsFromFile(options.snps)
+        instance.setSubjects(options.populations)
         return instance
     }
     
