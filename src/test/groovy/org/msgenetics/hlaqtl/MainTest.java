@@ -26,9 +26,8 @@ public class MainTest {
     public static void setUpClass() throws Exception {
         Main.loadSubjects( new ArrayList<String>() );
         
-        String propFile = System.getProperty("user.home")+"/.grails/ngsengine.properties";
         List args = new ArrayList();
-        args.add(Main.OPT_PROPS+propFile);
+        args.add(Main.OPT_PROPS + "ngsengine.properties");
         Main.loadConfig(args);
     }
 

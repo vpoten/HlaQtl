@@ -86,7 +86,7 @@ class GTExSearcher {
         cli._(longOpt: 'workDir', argName:'path', args: 1, 'working directory', required: true)
         cli._(longOpt: 'populations', argName:'code', valueSeparator:',', args: '+', defaultValue: 'CEU', 'populations where to get the subjects')
         cli._(longOpt: 'eqtlThr', argName:'thr', args: 1, defaultValue: '0.05', 'eQTL p-value threshold', type: Double)
-        cli._(longOpt: 'ldThr', argName:'thr', args: 1, defaultValue: '0.5', 'LD result thresholdd', type: Double)
+        cli._(longOpt: 'ldThr', argName:'thr', args: 1, defaultValue: '0.5', 'LD result threshold', type: Double)
         cli._(longOpt: 'regionSize', argName:'len', args: 1, 'SNP region size', defaultValue: '10000000', type: Integer)
         return cli
     }

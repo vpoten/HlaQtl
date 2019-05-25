@@ -31,7 +31,7 @@ public class JobGeneratorTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        Properties props=org.awsjoblauncher.Main.loadProperties(System.getProperty("user.home")+"/.grails/ngsengine.properties");
+        Properties props=org.awsjoblauncher.Main.loadProperties("ngsengine.properties");
         PostBase.setProps(props);
         
         subject.setId("NA11881");
