@@ -72,11 +72,14 @@ class GTExSearcher {
      */ 
     public static void main(args) {
         def instance =  createFromArgs(Arrays.copyOfRange(args, 1, args.length))
-        // TODO <--------------------------
+        if (instance != null) {
+            instance.perform()
+        }
     }
     
     static CliBuilder cliBuilder() {
         def cli = new CliBuilder(name: Main.COMM_GTEX_SEARCH)
+        cli._(longOpt: 'help', args: 0, 'display help')
         cli._(longOpt: 'genomesDir', argName:'path', args: 1, 'directory where 1000 genomes vcf files resides', required: true)
         cli._(longOpt: 'gtexDir', argName:'path', args: 1, 'directory where eQTL GTEx results resides', required: true)
         cli._(longOpt: 'snps', argName:'path', args: 1, 'file containing the rs ids of the query SNPs', required: true)
@@ -99,7 +102,10 @@ class GTExSearcher {
             return null
         }
         
-        def instance = new GTExSearcher()             
+        def instance = new GTExSearcher()
+        instance.setEqtlThr(options.eqtlThr)
+        instance.setLdThr(options.ldThr)
+        instance.setSnpRegionSize(options.regionSize)
         instance.loadQuerySnpsFromFile(options.snps)
         instance.setSubjects(options.populations)
         return instance
@@ -109,8 +115,6 @@ class GTExSearcher {
      *
      */
     def perform() {
-        println "Start time: ${new Date()}\n"
-        
         // Load snp info from ensembl rest api
         EnsemblRestClient client = new EnsemblRestClient(ENSEMBL_REST_API, 15, 200)
         List<SNPData> snpQuery = client.getSnps(queryIds, 'human')
@@ -213,8 +217,6 @@ class GTExSearcher {
                 println "Empty result: No table ${it.name()} will be written to disk.\n"
             }
         }
-        
-        println "End time: ${new Date()}\n"
     }
     
     /**
