@@ -56,7 +56,7 @@ class GTExSearcher {
     double ldThr = 0.5d
     
     /** Keep cache of tped files */
-    boolean useCache = true
+    boolean useCache = false
     
     /** List of subjects to use */
     List<String> subjects
