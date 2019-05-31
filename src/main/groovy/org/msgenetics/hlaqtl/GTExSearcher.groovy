@@ -103,6 +103,9 @@ class GTExSearcher {
         }
         
         def instance = new GTExSearcher()
+        instance.gtexDir = options.gtexDir
+        instance.workDir = options.workDir
+        instance.genomesDir = options.genomesDir
         instance.setEqtlThr(options.eqtlThr)
         instance.setLdThr(options.ldThr)
         instance.setSnpRegionSize(options.regionSize)
