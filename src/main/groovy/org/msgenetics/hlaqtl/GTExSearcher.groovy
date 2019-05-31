@@ -399,7 +399,7 @@ class GTExSearcher {
      * Writes a report with region info to disk
      */
     private void reportRegionsStats(chrRegions, snpsData) {
-        def writer = new File(workDir, 'regions_summary.tsv').newPrintWriter()
+        def writer = new File(workDir, "regions_summary_${new Date().format('yyyyMMddHHmmss')}.tsv").newPrintWriter()
         writer.println('chr\tposition\tsnp\treg_start\treg_end\tnum_eqtl\tnum_snps\tmissing_genotypes\trate_missing')
         
         chrRegions.each { chr, regions ->

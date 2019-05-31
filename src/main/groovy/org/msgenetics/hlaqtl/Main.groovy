@@ -376,7 +376,7 @@ public class Main
             reader = new CSVReader( new File(csvFile).newReader(), ',' as Character, '"' as Character) 
         }
         else {
-            def istr = Main.getClassLoader().getSystemResourceAsStream("haplo_hla.csv")
+            def istr = Main.class.getResourceAsStream("/haplo_hla.csv")
             reader = new CSVReader(new InputStreamReader(istr), ',' as Character, '"' as Character)
         }
         
@@ -395,7 +395,7 @@ public class Main
         
         
         //load subject lanes
-        def istr = Main.getClassLoader().getSystemResourceAsStream(GEUV_FILE)
+        def istr = Main.class.getResourceAsStream('/'+GEUV_FILE)
         reader = new BufferedReader(new InputStreamReader(istr))
         
 //        reader.readLine()//skip first line

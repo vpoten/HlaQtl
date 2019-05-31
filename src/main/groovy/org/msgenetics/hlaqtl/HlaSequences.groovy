@@ -436,7 +436,7 @@ class HlaSequences {
      * loads positions resource file
      */
     protected static loadPositions(){
-        def istr = HlaSequences.getClassLoader().getSystemResourceAsStream("hla_pos.txt")
+        def istr = HlaSequences.class.getResourceAsStream("/hla_pos.txt")
         def reader = new BufferedReader(new InputStreamReader(istr))
         
         reader.splitEachLine("\\s"){ toks->
