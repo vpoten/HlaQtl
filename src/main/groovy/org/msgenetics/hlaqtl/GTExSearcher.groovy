@@ -58,6 +58,9 @@ class GTExSearcher {
     /** Keep cache of tped files */
     boolean useCache = false
     
+    /** print debug messages */
+    boolean debug = false
+    
     /** List of subjects to use */
     List<String> subjects
     
@@ -276,7 +279,7 @@ class GTExSearcher {
                                         region['ld_results'][snpId] = rSq
                                     }
                                 }
-                                else {
+                                else if(debug) {
                                     System.err.println("SNP ${snpId} in region lead by ${current} (${region.snp.locus}) has no data")
                                 }
                             }
@@ -384,7 +387,7 @@ class GTExSearcher {
                     def chrDir = buildChrDir(chr) + '/'
                     // generate tped files in a separate directory for each chromosome
                     println "Load snp data from vcf file chr${chr}: ${new Date()}"
-                    SNPManager.loadSNPData(subjects, chrDir, vcfFile, [], locusStr, true, null)
+                    SNPManager.loadSNPData(subjects, chrDir, vcfFile, [], locusStr, true, null, false)
                 }
             }
         }
@@ -403,7 +406,7 @@ class GTExSearcher {
      */
     private void reportRegionsStats(chrRegions, snpsData) {
         def writer = new File(workDir, "regions_summary_${new Date().format('yyyyMMddHHmmss')}.tsv").newPrintWriter()
-        writer.println('chr\tposition\tsnp\treg_start\treg_end\tnum_eqtl\tnum_snps\tmissing_genotypes\trate_missing')
+        writer.println('chr\tposition\tsnp\treg_start\treg_end\thas_data\tnum_eqtl\tnum_snps\tmissing_genotypes\trate_missing')
         
         chrRegions.each { chr, regions ->
             regions.each { region->
@@ -411,6 +414,7 @@ class GTExSearcher {
                
                 writer.print("${chr}\t${region.snp.position}\t${region.snp.id}\t")
                 writer.print("${region.start}\t${region.end}\t")
+                writer.print("${region.snp.id in snpsData}\t");
                 writer.print("${region.eqtls.rowCount()}\t${region['region_snps'].size()}\t${region['missing_snps'].size()}\t")
                 writer.println("${region['missing_snps'].size()/(double)region['region_snps'].size()}")
             }

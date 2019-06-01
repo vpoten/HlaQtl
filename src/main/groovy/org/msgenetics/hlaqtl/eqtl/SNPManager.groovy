@@ -119,7 +119,9 @@ class SNPManager {
      * @param subjects : a list of subject ids
      * @return a SNPManager object
      */
-    static loadSNPData(subjects, outdir, vcfFile, List groups, String locusStr, boolean _1000gOnly, snpsFile = null) {
+    static loadSNPData(subjects, outdir, vcfFile, List groups, String locusStr, 
+        boolean _1000gOnly, snpsFile = null, imputeAndBgl = true) {
+        
         def locus = ((locusStr!=null) ? (locusStr =~ Utils.locusRegex) : null)
         def chr = (locusStr!=null) ? locus[0][1] : null
         def start = (locusStr!=null) ? (locus[0][2] as Integer) : null
@@ -239,11 +241,15 @@ class SNPManager {
                 return null
                
             // generate bgl file and populates imputedSnps map
-            snpMng.generateBgl(outdir+_1000G_PED) 
+            if (imputeAndBgl) {
+                snpMng.generateBgl(outdir+_1000G_PED) 
+            }
         }
         
         // generate file with imputed filtered results
-        snpMng.writeGenotypes("${outdir}${IMPUTED_FIN}.filter.txt")
+        if (imputeAndBgl) {
+            snpMng.writeGenotypes("${outdir}${IMPUTED_FIN}.filter.txt")
+        }
             
         //delete tmp dir
         "rm -rf ${tmpDir}".execute().waitFor()

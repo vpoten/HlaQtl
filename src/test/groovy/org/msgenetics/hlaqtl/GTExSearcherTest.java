@@ -66,6 +66,9 @@ public class GTExSearcherTest {
         // check a valid call with defaults
         GTExSearcher instance = GTExSearcher.createFromArgs(commandParts);
         assertNotNull(instance);
+        assertNotNull(instance.getWorkDir());
+        assertNotNull(instance.getGtexDir());
+        assertNotNull(instance.getGenomesDir());
         assertTrue(instance.getQueryIds().size() > 100);
         assertTrue(instance.getSubjects().size() > 100);
         assertEquals(instance.getSnpRegionSize(), 10000000);
