@@ -118,7 +118,7 @@ class EqtlSimpleCalc {
     def loadGenotypes(vcfFile, outdir, locus, boolean _1000gOnly, groups = []) {
         
         SNPManager snpMng = SNPManager.loadSNPData(subjExpr.keySet(), outdir,
-            vcfFile, groups, locus, _1000gOnly, null, true)
+            vcfFile, groups, locus, _1000gOnly, null, true, null)
         
         snps = snpMng.imputedSnps.keySet().collect{it}
         

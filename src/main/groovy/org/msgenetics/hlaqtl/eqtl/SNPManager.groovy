@@ -113,6 +113,7 @@ class SNPManager {
     def discardedSnps = [] as TreeSet //set of not reliable imputed snps
     String workDir
     String chr //chromosome
+    String plinkFilter = null
     
     
     /**
@@ -120,7 +121,7 @@ class SNPManager {
      * @return a SNPManager object
      */
     static loadSNPData(subjects, outdir, vcfFile, List groups, String locusStr, 
-        boolean _1000gOnly, snpsFile = null, imputeAndBgl = true) {
+        boolean _1000gOnly, snpsFile = null, imputeAndBgl = true, plinkFilter = null) {
         
         def locus = ((locusStr!=null) ? (locusStr =~ Utils.locusRegex) : null)
         def chr = (locusStr!=null) ? locus[0][1] : null
@@ -128,6 +129,10 @@ class SNPManager {
         def end = (locusStr!=null) ? (locus[0][3] as Integer) : null
         
         def snpMng = new SNPManager(workDir:outdir, chr:chr)
+        
+        if (plinkFilter != null) {
+            snpMng.plinkFilter = plinkFilter
+        }
         
         String hmgroup = null
         
@@ -237,7 +242,7 @@ class SNPManager {
             vcfToTped( vcfFile, tbiFile, chr, start, end, outdir+_1000G_PED, false,
                 subjects, tmpDir )
             
-            if( !filterTpedFiles(outdir+_1000G_PED) )
+            if( !filterTpedFiles(outdir+_1000G_PED, snpMng.plinkFilter) )
                 return null
                
             // generate bgl file and populates imputedSnps map
@@ -346,8 +351,8 @@ class SNPManager {
     /**
      *
      */
-    protected static def filterTpedFiles(outBase){
-        def test = "--recode ${filtOpts} --transpose "
+    protected static def filterTpedFiles(outBase, plinkFilter){
+        def test = "--recode ${plinkFilter ?: filtOpts} --transpose "
         def comm = plinkTestTped(test, outBase+'.tped', outBase+'.tfam', outBase+'.filter')
         
         if( comm.execute().waitFor()!=0 ){
@@ -610,7 +615,7 @@ class SNPManager {
                     return null
                 }
 
-                if( filterTpedFiles(outPrefChr) ){
+                if( filterTpedFiles(outPrefChr, plinkFilter) ){
                     generateBgl(outPrefChr, true)
                 }
                 else{

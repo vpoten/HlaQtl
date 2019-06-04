@@ -55,6 +55,9 @@ class GTExSearcher {
     /** LD threshold to filter results */
     double ldThr = 0.5d
     
+    /** Minor allele frequency filter for snps */
+    double maf = 0.01d
+    
     /** Keep cache of tped files */
     boolean useCache = false
     
@@ -90,6 +93,7 @@ class GTExSearcher {
         cli._(longOpt: 'populations', argName:'code', valueSeparator:',', args: '+', defaultValue: 'CEU', 'populations where to get the subjects')
         cli._(longOpt: 'eqtlThr', argName:'thr', args: 1, defaultValue: '0.05', 'eQTL p-value threshold', type: Double)
         cli._(longOpt: 'ldThr', argName:'thr', args: 1, defaultValue: '0.5', 'LD result threshold', type: Double)
+        cli._(longOpt: 'maf', argName:'freq', args: 1, defaultValue: '0.01', 'Minor allele frequency filter for snps', type: Double)
         cli._(longOpt: 'regionSize', argName:'len', args: 1, 'SNP region size', defaultValue: '10000000', type: Integer)
         return cli
     }
@@ -111,6 +115,7 @@ class GTExSearcher {
         instance.genomesDir = options.genomesDir
         instance.setEqtlThr(options.eqtlThr)
         instance.setLdThr(options.ldThr)
+        instance.setMaf(options.maf)
         instance.setSnpRegionSize(options.regionSize)
         instance.loadQuerySnpsFromFile(options.snps)
         instance.setSubjects(options.populations)
@@ -373,6 +378,7 @@ class GTExSearcher {
      * Extract tped from vcfs in threads
      */
     private void extractTpedFromVcfs(chrRegions) {
+        def plinkFilter = "--maf ${maf}"
         
         // closure for tped extraction
         def tpedFromVcfThreadCalc = { thread, totalThrs ->
@@ -387,7 +393,7 @@ class GTExSearcher {
                     def chrDir = buildChrDir(chr) + '/'
                     // generate tped files in a separate directory for each chromosome
                     println "Load snp data from vcf file chr${chr}: ${new Date()}"
-                    SNPManager.loadSNPData(subjects, chrDir, vcfFile, [], locusStr, true, null, false)
+                    SNPManager.loadSNPData(subjects, chrDir, vcfFile, [], locusStr, true, null, false, plinkFilter)
                 }
             }
         }

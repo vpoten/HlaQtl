@@ -983,7 +983,7 @@ public class Main
         locus = transEqtl ? null : locus
         
         def snpMng = SNPManager.loadSNPData(subjects.keySet(), outdir, vcfFile,
-            groups, locus, _1000gOnly, snpsFile, true)
+            groups, locus, _1000gOnly, snpsFile, true, null)
 
         //read expression data of each subject
         def selIsoforms = null

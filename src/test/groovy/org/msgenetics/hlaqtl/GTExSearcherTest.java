@@ -73,6 +73,7 @@ public class GTExSearcherTest {
         assertTrue(instance.getSubjects().size() > 100);
         assertEquals(instance.getSnpRegionSize(), 10000000);
         assertTrue(Math.abs(0.05d - instance.getEqtlThr()) < 1e-12);
+        assertTrue(Math.abs(0.01d - instance.getMaf()) < 1e-12);
         
         // check an invalid call
         String [] args = Arrays.copyOf(commandParts, commandParts.length + 1);
@@ -81,13 +82,15 @@ public class GTExSearcherTest {
         assertNull(instance);
         
         // check a call with non-defaults
-        args = Arrays.copyOf(commandParts, commandParts.length + 3);
+        args = Arrays.copyOf(commandParts, commandParts.length + 4);
         args[commandParts.length] = "--eqtlThr=0.01";
         args[commandParts.length + 1] = "--ldThr=0.7";
         args[commandParts.length + 2] = "--regionSize=500000";
+        args[commandParts.length + 3] = "--maf=0.02";
         instance = GTExSearcher.createFromArgs(args);
         assertTrue(Math.abs(0.01d - instance.getEqtlThr()) < 1e-12);
         assertTrue(Math.abs(0.7d - instance.getLdThr()) < 1e-12);
+        assertTrue(Math.abs(0.02d - instance.getMaf()) < 1e-12);
         assertEquals(instance.getSnpRegionSize(), 500000);
     }
     
