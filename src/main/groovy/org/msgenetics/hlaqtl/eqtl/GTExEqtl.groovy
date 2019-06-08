@@ -20,7 +20,7 @@ import org.ngsutils.Utils
  *
  * @author victor
  */
-class GTExEqtl {
+class GTExEqtl extends BaseEqtlTable {
     
     String path
     
@@ -113,16 +113,6 @@ class GTExEqtl {
         (1..filteredTables.size()-1).each({result.append(filteredTables[it])})
         result.setName("best-eqtls-all-tissues")
         return result
-    }
-    
-    /**
-     * Filter eqtls by region 
-     */
-    static Table filterByRegion(Table srcTable, String chr, int start, int end) {
-        def chrCol = (StringColumn) srcTable.stringColumn('chr')
-        def snpPosCol = (IntColumn) srcTable.intColumn('pos')
-        
-        return srcTable.where(chrCol.isEqualTo(chr).and(snpPosCol.isBetweenInclusive(start, end)));
     }
 }
 
