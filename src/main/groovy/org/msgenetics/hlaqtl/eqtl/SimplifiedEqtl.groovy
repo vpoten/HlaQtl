@@ -23,6 +23,7 @@ class SimplifiedEqtl extends BaseEqtlTable {
         ColumnType.STRING, //strand:  genomic strand
         ColumnType.STRING, //chr:  chromosome (variant; same as feat_chr for cis-eQTLs)
         ColumnType.INTEGER, //pos:  position of the first reference base of the variant
+        ColumnType.STRING, //rs_id: snp rs id
         ColumnType.DOUBLE, //pval:  corrected p-value 
         ColumnType.DOUBLE, //slope:  regression slope
     ]
