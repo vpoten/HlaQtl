@@ -6,14 +6,10 @@
 
 package org.msgenetics.hlaqtl.eqtl
 
-import tech.tablesaw.api.Table;
+import tech.tablesaw.api.Table
 import tech.tablesaw.api.ColumnType
 import tech.tablesaw.api.DoubleColumn
 import tech.tablesaw.api.StringColumn
-import tech.tablesaw.api.IntColumn
-import tech.tablesaw.io.csv.CsvReadOptions
-
-
 import org.ngsutils.Utils
 
 /**
@@ -21,8 +17,6 @@ import org.ngsutils.Utils
  * @author victor
  */
 class GTExEqtl extends BaseEqtlTable {
-    
-    String path
     
     static final regEgenes = /([\w-]+).v7.egenes.txt.gz/
     static final suffEgenes = '.v7.egenes.txt.gz'
@@ -65,6 +59,13 @@ class GTExEqtl extends BaseEqtlTable {
     ]
     
     /**
+     * get column types
+     */ 
+    ColumnType[] getColumnTypes() {
+        return egenesV7ColumnTypes
+    }
+    
+    /**
      * Get tissues availables in path; as extracted from egenes file names
      */
     def getTissues() {
@@ -77,16 +78,7 @@ class GTExEqtl extends BaseEqtlTable {
      */
     Table loadTable(String tissue) {
         def stream = Utils.createInputStream(new File(this.path, "${tissue}${this.suffEgenes}").toString())
-        def builder =  CsvReadOptions.builder(stream)
-            .tableName(tissue)
-            .separator((char)'\t') // table is tab-delimited
-            .columnTypes(egenesV7ColumnTypes)
-
-        CsvReadOptions options = builder.build();
-        
-        Table table = Table.read().usingOptions(options);
-
-        return table
+        return _loadTable(stream, tissue)
     }
     
     /**

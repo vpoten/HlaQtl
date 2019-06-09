@@ -119,7 +119,7 @@ public class GTExEqtlTest {
         instance.setPath(dataPath);
         
         Table table = instance.loadTable("Adipose_Subcutaneous");
-        Table result = GTExEqtl.filterByRegion(table, "1", 800000, 1100000);
+        Table result = instance.filterByRegion(table, "1", 800000, 1100000);
         assertTrue(result.rowCount() > 1 && result.rowCount() < 50);
     }
 }

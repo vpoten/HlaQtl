@@ -11,20 +11,48 @@ import tech.tablesaw.api.ColumnType
 import tech.tablesaw.api.DoubleColumn
 import tech.tablesaw.api.StringColumn
 import tech.tablesaw.api.IntColumn
+import tech.tablesaw.io.csv.CsvReadOptions
 
 /**
  * Base class for eQTL tables
  * @author victor
  */
-class BaseEqtlTable {
+abstract class BaseEqtlTable {
+    /** path for files */
+    String path
     
-    static String chrColName = 'chr'
-    static String posColName = 'pos'
+    /** column name for chr */
+    String chrColName = 'chr'
+    
+    /** column name for snp position*/
+    String posColName = 'pos'
+    
+    /** column separator */
+    Character separator = (char)'\t'
+    
+    /** get column types */
+    abstract ColumnType[] getColumnTypes()
+    
+    /**
+     * Load a table from stream
+     */
+    protected Table _loadTable(stream, name) {
+        def builder =  CsvReadOptions.builder(stream)
+            .tableName(name)
+            .separator(separator) // table is tab-delimited
+            .columnTypes(getColumnTypes())
+
+        CsvReadOptions options = builder.build();
+        
+        Table table = Table.read().usingOptions(options);
+
+        return table
+    }
 	
     /**
      * Filter eqtls by region 
      */
-    static Table filterByRegion(Table srcTable, String chr, int start, int end) {
+    Table filterByRegion(Table srcTable, String chr, int start, int end) {
         def chrCol = (StringColumn) srcTable.stringColumn(chrColName)
         def snpPosCol = (IntColumn) srcTable.intColumn(posColName)
         

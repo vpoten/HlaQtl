@@ -135,8 +135,11 @@ class GTExSearcher {
             snpQuery = snpQuery.findAll{it.chr in chrAllowed}
         }
         
+        // create eqtl table loader
+        def eqtlTableLoader = new GTExEqtl()
+        
         // Load best eqtls from GTEx data
-        Table bestEqtls = GTExEqtl.getBestEqtlsAllTissues(gtexDir, eqtlThr);
+        Table bestEqtls = eqtlTableLoader.getBestEqtlsAllTissues(gtexDir, eqtlThr);
         
         // Build regions around snps in query list
         def chrRegions = [:] as TreeMap
@@ -157,7 +160,7 @@ class GTExSearcher {
         // Associate eqtls with regions
         chrRegions.each { chr, regions ->
             regions.each { region ->
-                Table result = GTExEqtl.filterByRegion(bestEqtls, chr, region.start, region.end)
+                Table result = eqtlTableLoader.filterByRegion(bestEqtls, chr, region.start, region.end)
                 region['eqtls'] = result
             }
         }
