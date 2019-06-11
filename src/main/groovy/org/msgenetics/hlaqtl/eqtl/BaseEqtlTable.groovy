@@ -24,8 +24,11 @@ abstract class BaseEqtlTable {
     /** column name for chr */
     String chrColName = 'chr'
     
-    /** column name for snp position*/
+    /** column name for snp position */
     String posColName = 'pos'
+    
+    /** column name for pvalue */
+    String pvalueColName = 'pval'
     
     /** column separator */
     Character separator = (char)'\t'
@@ -39,7 +42,7 @@ abstract class BaseEqtlTable {
     protected Table _loadTable(stream, name) {
         def builder =  CsvReadOptions.builder(stream)
             .tableName(name)
-            .separator(separator) // table is tab-delimited
+            .separator(getSeparator()) // table is tab-delimited
             .columnTypes(getColumnTypes())
 
         CsvReadOptions options = builder.build();
@@ -48,13 +51,22 @@ abstract class BaseEqtlTable {
 
         return table
     }
+    
+    /**
+     * Filter table by p-value threshold
+     */ 
+    Table filterPvalue(Table table, Double thr) {
+        def column = (DoubleColumn) table.doubleColumn(getPvalueColName())
+        table = table.where(column.isLessThan(thr))
+        return table
+    }
 	
     /**
      * Filter eqtls by region 
      */
     Table filterByRegion(Table srcTable, String chr, int start, int end) {
-        def chrCol = (StringColumn) srcTable.stringColumn(chrColName)
-        def snpPosCol = (IntColumn) srcTable.intColumn(posColName)
+        def chrCol = (StringColumn) srcTable.stringColumn(getChrColName())
+        def snpPosCol = (IntColumn) srcTable.intColumn(getPosColName())
         
         return srcTable.where(chrCol.isEqualTo(chr).and(snpPosCol.isBetweenInclusive(start, end)));
     }

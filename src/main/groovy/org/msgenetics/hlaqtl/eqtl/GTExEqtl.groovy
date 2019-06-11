@@ -22,7 +22,7 @@ class GTExEqtl extends BaseEqtlTable {
     static final suffEgenes = '.v7.egenes.txt.gz'
     
     // Columns for egenes v7 file:
-    static ColumnType[] egenesV7ColumnTypes = [
+    static final ColumnType[] egenesV7ColumnTypes = [
         ColumnType.STRING, //gene_id:  GENCODE/Ensembl gene ID
         ColumnType.STRING, //gene_name:  GENCODE gene name
         ColumnType.STRING, //gene_chr:  chromosome (gene)
@@ -66,6 +66,13 @@ class GTExEqtl extends BaseEqtlTable {
     }
     
     /**
+     * Override p-value column name
+     */ 
+    String getPvalueColName() {
+        return 'qval'
+    }
+    
+    /**
      * Get tissues availables in path; as extracted from egenes file names
      */
     def getTissues() {
@@ -91,11 +98,10 @@ class GTExEqtl extends BaseEqtlTable {
                 Table table = instance.loadTable(tissue)
                 
                 // apply p-value threshold
-                def column = (DoubleColumn) table.doubleColumn('qval')
-                table = table.where(column.isLessThan(pvalThr))
+                table = instance.filterPvalue(table, pvalThr)
                 
                 // add tissue column to the filtered table
-                column = StringColumn.create("tissue", table.rowCount())
+                def column = StringColumn.create("tissue", table.rowCount())
                 (0..table.rowCount()-1).each({column.set(it, tissue)})
                 table.addColumns(column)
                 return table

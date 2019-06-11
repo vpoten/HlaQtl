@@ -6,6 +6,7 @@
 
 package org.msgenetics.hlaqtl.eqtl
 
+import tech.tablesaw.api.Table
 import tech.tablesaw.api.ColumnType
 
 /**
@@ -15,7 +16,7 @@ import tech.tablesaw.api.ColumnType
 class SimplifiedEqtl extends BaseEqtlTable {
     
     // Columns for simplified eqtl file:
-    static ColumnType[] simplifiedColumnTypes = [
+    static final ColumnType[] simplifiedColumnTypes = [
         ColumnType.STRING, //feat:  feature name or code (gene, transcript, protein, ...)
         ColumnType.STRING, //feat_chr:  chromosome (feature)
         ColumnType.INTEGER, //start:  feature start position (in base pairs; 1-based coordinates)
