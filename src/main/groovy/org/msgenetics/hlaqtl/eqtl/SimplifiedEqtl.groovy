@@ -34,4 +34,12 @@ class SimplifiedEqtl extends BaseEqtlTable {
     ColumnType[] getColumnTypes() {
         return simplifiedColumnTypes
     }
+    
+    /**
+     * Load table from path
+     */
+    Table loadTable(String name) {
+        def stream = Utils.createInputStream(new File(this.path).toString())
+        return _loadTable(stream, name)
+    }
 }

@@ -136,9 +136,11 @@ class GTExSearcher {
         }
         
         // create eqtl table loader
+        // TODO create BaseEqtlTable instance
         def eqtlTableLoader = new GTExEqtl()
         
         // Load best eqtls from GTEx data
+        // TODO use abstract BaseEqtlTable operation for loading
         Table bestEqtls = eqtlTableLoader.getBestEqtlsAllTissues(gtexDir, eqtlThr);
         
         // Build regions around snps in query list
