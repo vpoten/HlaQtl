@@ -12,6 +12,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
+import tech.tablesaw.api.Table;
+
 /**
  *
  * @author victor
@@ -39,6 +41,12 @@ public class SimplifiedEqtlTest {
 
     @Test
     public void testLoadTable() {
-        // TODO
+        SimplifiedEqtl instance = new SimplifiedEqtl();
+        instance.setPath("/home/victor/Escritorio/transcriptome_60/eqtl_search/eqtl_simplified_sample.csv");
+        Table table = instance.loadTable("eqtls");
+        assertTrue(table.rowCount() > 1900);
+        
+        table = instance.getBestEqtls(1e-4);
+        assertTrue(table.rowCount() < 1400);
     }
 }
