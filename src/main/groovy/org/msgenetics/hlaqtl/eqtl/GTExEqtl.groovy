@@ -112,5 +112,12 @@ class GTExEqtl extends BaseEqtlTable {
         result.setName("best-eqtls-all-tissues")
         return result
     }
+    
+    /**
+     * Get best eqtls all tissues
+     */
+    Table getBestEqtls(pvalThr) {
+        return GTExEqtl.getBestEqtlsAllTissues(path, pvalThr)
+    }
 }
 

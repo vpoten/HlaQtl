@@ -43,4 +43,12 @@ class SimplifiedEqtl extends BaseEqtlTable {
         def stream = Utils.createInputStream(new File(this.path).toString())
         return _loadTable(stream, name)
     }
+    
+    /**
+     * get best eqtls
+     */
+    Table getBestEqtls(pvalThr) {
+        Table table = loadTable('best_eqtls')
+        return filterPvalue(table, pvalThr)
+    }
 }

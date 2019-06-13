@@ -52,8 +52,8 @@ public class GTExSearcherTest {
         String [] commandParts = {
             "--snps=" + GTExSearcherTest.snpsFile,
             "--workDir=" + GTExSearcherTest.workDir,
-            "--gtexDir=" + GTExSearcherTest.gtexDir,
             "--genomesDir=" + GTExSearcherTest.genomesDir,
+            "--gtexDir=" + GTExSearcherTest.gtexDir
         };
         
         for (String c : commandParts)  {
@@ -69,6 +69,7 @@ public class GTExSearcherTest {
         assertNotNull(instance.getWorkDir());
         assertNotNull(instance.getGtexDir());
         assertNotNull(instance.getGenomesDir());
+        assertNull(instance.getEqtlFile());
         assertTrue(instance.getQueryIds().size() > 100);
         assertTrue(instance.getSubjects().size() > 100);
         assertEquals(instance.getSnpRegionSize(), 10000000);
@@ -92,6 +93,18 @@ public class GTExSearcherTest {
         assertTrue(Math.abs(0.7d - instance.getLdThr()) < 1e-12);
         assertTrue(Math.abs(0.02d - instance.getMaf()) < 1e-12);
         assertEquals(instance.getSnpRegionSize(), 500000);
+        
+        // check a call with eqtl file input
+        args = Arrays.copyOf(commandParts, commandParts.length);
+        args[3] = "--eqtlFile=/home/user/file.csv";
+        instance = GTExSearcher.createFromArgs(args);
+        assertNull(instance.getGtexDir());
+        assertNotNull(instance.getEqtlFile());
+        
+        // check an invalid call without eqtl data source
+        args = Arrays.copyOf(commandParts, commandParts.length - 1);
+        instance = GTExSearcher.createFromArgs(args);
+        assertNull(instance);
     }
     
 //    @Test

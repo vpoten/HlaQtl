@@ -36,6 +36,9 @@ abstract class BaseEqtlTable {
     /** get column types */
     abstract ColumnType[] getColumnTypes()
     
+    /** get best eqtls types */
+    abstract Table getBestEqtls(pvalThr)
+    
     /**
      * Load a table from stream
      */

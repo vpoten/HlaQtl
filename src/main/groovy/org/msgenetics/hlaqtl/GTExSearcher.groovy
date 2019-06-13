@@ -21,6 +21,7 @@ import groovy.cli.Unparsed
 import org.msgenetics.hlaqtl.eqtl.LDCalculator
 import org.msgenetics.hlaqtl.eqtl.SNPManager
 import org.msgenetics.hlaqtl.eqtl.GTExEqtl
+import org.msgenetics.hlaqtl.eqtl.SimplifiedEqtl
 
 
 /**
@@ -39,6 +40,9 @@ class GTExSearcher {
     
     /** GTEx eqtl data */
     String gtexDir = null
+    
+    /** Simplified eqtl data file */
+    String eqtlFile = null
     
     /** Working directory */
     String workDir = null
@@ -87,7 +91,7 @@ class GTExSearcher {
         def cli = new CliBuilder(name: Main.COMM_GTEX_SEARCH)
         cli._(longOpt: 'help', args: 0, 'display help')
         cli._(longOpt: 'genomesDir', argName:'path', args: 1, 'directory where 1000 genomes vcf files resides', required: true)
-        cli._(longOpt: 'gtexDir', argName:'path', args: 1, 'directory where eQTL GTEx results resides', required: true)
+        cli._(longOpt: 'gtexDir', argName:'path', args: 1, 'directory where eQTL GTEx results resides')
         cli._(longOpt: 'snps', argName:'path', args: 1, 'file containing the rs ids of the query SNPs', required: true)
         cli._(longOpt: 'workDir', argName:'path', args: 1, 'working directory', required: true)
         cli._(longOpt: 'populations', argName:'code', valueSeparator:',', args: '+', defaultValue: 'CEU', 'populations where to get the subjects')
@@ -95,6 +99,7 @@ class GTExSearcher {
         cli._(longOpt: 'ldThr', argName:'thr', args: 1, defaultValue: '0.5', 'LD result threshold', type: Double)
         cli._(longOpt: 'maf', argName:'freq', args: 1, defaultValue: '0.01', 'Minor allele frequency filter for snps', type: Double)
         cli._(longOpt: 'regionSize', argName:'len', args: 1, 'SNP region size', defaultValue: '10000000', type: Integer)
+        cli._(longOpt: 'eqtlFile', argName:'file_path', args: 1, 'the eqtl data is a simplified eQtl table file')
         return cli
     }
     
@@ -110,7 +115,8 @@ class GTExSearcher {
         }
         
         def instance = new GTExSearcher()
-        instance.gtexDir = options.gtexDir
+        instance.gtexDir = options.gtexDir == false ? null : options.gtexDir
+        instance.eqtlFile = options.eqtlFile == false ? null : options.eqtlFile
         instance.workDir = options.workDir
         instance.genomesDir = options.genomesDir
         instance.setEqtlThr(options.eqtlThr)
@@ -119,7 +125,26 @@ class GTExSearcher {
         instance.setSnpRegionSize(options.regionSize)
         instance.loadQuerySnpsFromFile(options.snps)
         instance.setSubjects(options.populations)
+        
+        if (instance.gtexDir == null && instance.eqtlFile == null) {
+            System.err.println("Error: You must specify an eqtl data source: --gtexDir or --eqtlFile")
+            return null
+        }
+        
         return instance
+    }
+    
+    /**
+     * Create eqtl reader from options
+     */ 
+    private createEqtlReader() {
+        if (instance.gtexDir != null) {
+            return new GTExEqtl(path: instance.gtexDir)
+        } else if(instance.eqtlFile != null) {
+            return new SimplifiedEqtl(path: instance.eqtlFile)
+        }
+        
+        return null
     }
     
     /**
@@ -136,12 +161,10 @@ class GTExSearcher {
         }
         
         // create eqtl table loader
-        // TODO create BaseEqtlTable instance
-        def eqtlTableLoader = new GTExEqtl()
+        def eqtlTableLoader = createEqtlReader()
         
-        // Load best eqtls from GTEx data
-        // TODO use abstract BaseEqtlTable operation for loading
-        Table bestEqtls = eqtlTableLoader.getBestEqtlsAllTissues(gtexDir, eqtlThr);
+        // Load best eqtls from GTEx data or simplified eqtl table
+        Table bestEqtls = eqtlTableLoader.getBestEqtls(eqtlThr)
         
         // Build regions around snps in query list
         def chrRegions = [:] as TreeMap
