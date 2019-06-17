@@ -73,6 +73,13 @@ class GTExEqtl extends BaseEqtlTable {
     }
     
     /**
+     * Override snp column name
+     */ 
+    String getSnpColName() {
+        return 'rs_id_dbSNP147_GRCh37p13'
+    }
+    
+    /**
      * Get tissues availables in path; as extracted from egenes file names
      */
     def getTissues() {

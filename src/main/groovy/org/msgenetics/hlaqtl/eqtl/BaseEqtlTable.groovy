@@ -30,6 +30,9 @@ abstract class BaseEqtlTable {
     /** column name for pvalue */
     String pvalueColName = 'pval'
     
+    /** column name for pvalue */
+    String snpColName = 'rs_id'
+    
     /** column separator */
     Character separator = (char)'\t'
     

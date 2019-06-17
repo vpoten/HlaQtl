@@ -138,10 +138,10 @@ class GTExSearcher {
      * Create eqtl reader from options
      */ 
     private createEqtlReader() {
-        if (instance.gtexDir != null) {
-            return new GTExEqtl(path: instance.gtexDir)
-        } else if(instance.eqtlFile != null) {
-            return new SimplifiedEqtl(path: instance.eqtlFile)
+        if (gtexDir != null) {
+            return new GTExEqtl(path: gtexDir)
+        } else if(eqtlFile != null) {
+            return new SimplifiedEqtl(path: eqtlFile)
         }
         
         return null
@@ -190,6 +190,9 @@ class GTExSearcher {
             }
         }
         
+        // TODO remove this flag
+        useCache = true
+        
         if(useCache == false || !checkExistsTped(chrRegions)) {
             // Obtain tped files from 1000genomes vcfs
             extractTpedFromVcfs(chrRegions)
@@ -206,7 +209,7 @@ class GTExSearcher {
                 // add the snp that leads the region and all the snps in associated eqtls
                 snps << region.snp.id
                 Table eqtls = region.eqtls
-                def regionSnps = ((StringColumn) eqtls.stringColumn('rs_id_dbSNP147_GRCh37p13')).
+                def regionSnps = ((StringColumn) eqtls.stringColumn(eqtlTableLoader.snpColName)).
                     asSet().
                     findAll{ it!=null && it.startsWith('rs') }
                 region['region_snps'] = regionSnps
@@ -240,11 +243,11 @@ class GTExSearcher {
                 // create the final result table for the region: eqtl table + extra columns:
                 // extra columns: region_snp, region_snp_pos, ld_rsq
                 
-                StringColumn regionSnps = (StringColumn) region.eqtls.stringColumn('rs_id_dbSNP147_GRCh37p13')
+                StringColumn regionSnps = (StringColumn) region.eqtls.stringColumn(eqtlTableLoader.snpColName)
                 Table eqtlsSubset = region.eqtls.where(regionSnps.isIn(ldResultsPass.keySet()))
                 
-                finalTableFiltered = appendToResultTable(region, eqtlsSubset, finalTableFiltered)
-                finalTableAll = appendToResultTable(region, region.eqtls.copy(), finalTableAll)
+                finalTableFiltered = appendToResultTable(region, eqtlsSubset, finalTableFiltered, eqtlTableLoader)
+                finalTableAll = appendToResultTable(region, region.eqtls.copy(), finalTableAll, eqtlTableLoader)
             }
         }
         
@@ -261,12 +264,12 @@ class GTExSearcher {
     /**
      * 
      */ 
-    private Table appendToResultTable(region, Table eqtlsSubset, Table destination) {
+    private Table appendToResultTable(region, Table eqtlsSubset, Table destination, eqtlTableLoader) {
         if (eqtlsSubset.rowCount() == 0) {
             return destination
         }
         
-        StringColumn resultSnps = (StringColumn) eqtlsSubset.stringColumn('rs_id_dbSNP147_GRCh37p13')
+        StringColumn resultSnps = (StringColumn) eqtlsSubset.stringColumn(eqtlTableLoader.snpColName)
         // create extra columns
         def snpCol = StringColumn.create('region_snp', (0..eqtlsSubset.rowCount()-1).collect{region.snp.id})
         def snpPosCol = IntColumn.create('region_snp_pos', (0..eqtlsSubset.rowCount()-1).collect{region.snp.position} as int [])
