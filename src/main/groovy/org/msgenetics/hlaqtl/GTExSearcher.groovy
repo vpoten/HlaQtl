@@ -174,7 +174,10 @@ class GTExSearcher {
                     chrRegions[snp.chrNum] = []
                 }
                 def start = (snp.position - snpRegionSize) < 1 ? 1 : snp.position - snpRegionSize
-                chrRegions[snp.chrNum] << ['start': start, 'end': snp.position + snpRegionSize, 'snp': snp]
+                
+                if (chrRegions[snp.chrNum].find{it.snp.id == snp.id} == null) {
+                    chrRegions[snp.chrNum] << ['start': start, 'end': snp.position + snpRegionSize, 'snp': snp]
+                }
             }
         
         // sort chr regions by start position
