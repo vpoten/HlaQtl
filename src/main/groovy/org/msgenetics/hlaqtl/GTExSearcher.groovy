@@ -173,9 +173,10 @@ class GTExSearcher {
                 if ( !(snp.chrNum in chrRegions) ) {
                     chrRegions[snp.chrNum] = []
                 }
-                def start = (snp.position - snpRegionSize) < 1 ? 1 : snp.position - snpRegionSize
                 
                 if (chrRegions[snp.chrNum].find{it.snp.id == snp.id} == null) {
+                    // append region if not already present
+                    def start = (snp.position - snpRegionSize) < 1 ? 1 : snp.position - snpRegionSize
                     chrRegions[snp.chrNum] << ['start': start, 'end': snp.position + snpRegionSize, 'snp': snp]
                 }
             }
@@ -192,9 +193,6 @@ class GTExSearcher {
                 region['eqtls'] = result
             }
         }
-        
-        // TODO remove this flag
-        useCache = true
         
         if(useCache == false || !checkExistsTped(chrRegions)) {
             // Obtain tped files from 1000genomes vcfs
